@@ -10,7 +10,8 @@ function test_cccv_simulations()
     za0 = 0.85;
     zb0 = 0.75;
     U0  = 3.0;
-    Uf = 4.2;
+    Vmax = 4.2;
+    Vmin = 3.0;
 
     q = 0.6;
     r = 1.5;
@@ -26,14 +27,14 @@ function test_cccv_simulations()
     I = current_target*ones(size(t)); % applied current (A) 
 
     [tfinal, za, zb, Ia, Ib] = solve_z_dynamics_cccv(t, I, ...
-        alpha, Ra, Rb, Qa, Qb, za0, zb0, Uf, U0);
+        alpha, Ra, Rb, Qa, Qb, za0, zb0, Vmax, U0);
 
 
     %% Test the simulation based solution
     ocv_lin = @(z) U0 + alpha * z;
 
-    out = run_discrete_time_simulation_cccv(t, I, Qa, Qb, Ra, Rb, ...
-            za0, zb0, ocv_lin, Uf);
+    out = run_discrete_time_simulation_complete(I, -I, abs(I/20), Qa, Qb, Ra, Rb, ...
+            za0, zb0, ocv_lin, Vmin, Vmax);
 
 
     % See the results

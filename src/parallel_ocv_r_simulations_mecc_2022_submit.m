@@ -12,7 +12,7 @@ function parallel_ocv_r_simulations_mecc_2022_submit()
     Qa = 5 * 3600; % As
     alpha = 1.2;
     za0 = 0.80;
-    zb0 = 0.75;
+    zb0 = 0.85;
     U0  = 3.0;
     current_target = -Qa / (3 * 3600);
 
@@ -56,7 +56,7 @@ function plot_tau_sensitivity(Qa, Ra, alpha)
     ylabel('$r$ = $R_a/R_b$', 'Interpreter', 'Latex')
     xlabel('$q$ = $Q_a/Q_b$', 'Interpreter', 'Latex')
     title('$\tau$ (hrs)', 'Interpreter', 'Latex')
-    saveas(fh, 'figs/fig_time_constant.png')
+    saveas(fh, 'figures/fig_time_constant.png')
 
 end
 
@@ -129,7 +129,7 @@ function plot_dz_ss_sensitivity(Ra, current_target, alpha)
     xlabel('$q$ = $Q_a/Q_b$', 'Interpreter', 'Latex')
     title('$\Delta z_{ss}$', 'Interpreter', 'Latex')
 
-    saveas(fh, 'figs/fig_dz_ss_sensitivity.png')
+    saveas(fh, 'figures/fig_dz_ss_sensitivity.png')
 
 end
 
@@ -201,7 +201,7 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
     xlabel('$q$ = $Q_a/Q_b$', 'Interpreter', 'Latex')
     title('$\Delta I_{ss}$ (A)', 'Interpreter', 'Latex')
 
-    saveas(fh, 'figs/fig_di_ss_sensitivity.png')
+    saveas(fh, 'figures/fig_di_ss_sensitivity.png')
 
 end
 
@@ -274,7 +274,7 @@ function plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
 
     line(1000, 1000, ...
         'Marker', 'o', 'MarkerSize', ms, 'Color', [0 0.5 0], 'LineStyle', 'none', ...
-        'MarkerFaceColor', [0 0.5 0], 'DisplayName', '$V_t=4.2V$', 'Parent', ax1)
+        'MarkerFaceColor', [0 0.5 0], 'DisplayName', '$V_t=4.2V$', 'HandleVisibility', 'off', 'Parent', ax1)
     
     xlim(ax1, [0, 1.5])
     ylim(ax1, [-0.02 0.06])
@@ -286,7 +286,7 @@ function plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
     legend(ax1, 'show', 'Location', 'NorthEast', 'Interpreter', 'Latex')
     legend(ax2, {'$z_a$', '$z_b$'}, 'Location', 'NorthWest', 'Interpreter', 'Latex')
 
-    saveas(fh, sprintf('figs/fig_z_dynamics_timeseries.png'))
+    saveas(fh, sprintf('figures/fig_z_dynamics_timeseries.png'))
 
 end
 
@@ -349,7 +349,7 @@ function plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
 
     line(1000, 1000, ...
         'Marker', 'o', 'MarkerSize', ms, 'Color', [0 0.5 0], 'LineStyle', 'none', ...
-        'MarkerFaceColor', [0 0.5 0], 'DisplayName', '$V_t=4.2V$', 'Parent', ax1)    
+        'MarkerFaceColor', [0 0.5 0], 'DisplayName', '$V_t=4.2V$', 'HandleVisibility', 'off', 'Parent', ax1)    
 
     xlim(ax1, [0, 1.5])
     ylim(ax1, [-0.1 2.0])
@@ -359,6 +359,6 @@ function plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
     legend(ax1, 'show', 'Location', 'NorthEast', 'Interpreter', 'Latex')
     legend(ax2, {'$I_a$', '$I_b$'}, 'Location', 'NorthEast', 'Interpreter', 'Latex')
 
-    saveas(fh, sprintf('figs/fig_i_dynamics_timeseries.png'))
+    saveas(fh, sprintf('figures/fig_i_dynamics_timeseries.png'))
 
 end

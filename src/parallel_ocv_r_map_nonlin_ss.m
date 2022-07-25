@@ -1,4 +1,4 @@
-function parallel_ocv_r_nonlin_ss()
+function parallel_ocv_r_map_nonlin_ss()
     % Build steady-state imbalance maps for the nonlinear case
 
     clear all; close all; clc
