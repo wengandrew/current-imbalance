@@ -1,8 +1,12 @@
 function out = solve_z_dynamics_cccv_complete(tcc, ...
             I_chg, I_dch, I_current_cutoff, alpha, Ra, Rb, Qa, Qb, za0, zb0, ...
             ocv_fn, Vmin, Vmax)
-    % State of charge dynamics computation including CCCV and subsequent
-    % discharge
+    % State of charge dynamics computation for a full charge-discharge
+    % cycle, including:
+    %
+    % 1. Constant current charge
+    % 2. Constant voltage charge
+    % 3. Constant current discharge
     %
     % x = [za, zb]^T
     %
@@ -19,7 +23,7 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     %   Qb:     capacity of cell B in Ampere-seconds
     %   za0:    initial state of charge for cell A (0,1)
     %   zb0:    initial state of charge for cell B (0,1)
-    %   ocv_fn: OCV function = f(z)
+    %   ocv_fn: OCV function = f(z), z in (0,1)
     %   Vmin:   target discharge min voltage
     %   Vmax:   target charge max voltage
     %
@@ -32,106 +36,170 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     % condition, so I'm going to simulate for a large time vector then 
     % truncate the output.
 
-    %% PART 1: CC Discharge Simulation
-    [zacc1, zbcc1, Iacc1, Ibcc1] = solve_cc(tcc, I_chg, Ra, Rb, Qa, Qb, alpha, ...
-                                        za0, zb0);
+    % Constant current charge
+    cc1 = solve_cc(tcc, I_chg, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vmax);
 
-    Vtacc1 = ocv_fn(zacc1) - Iacc1*Ra;
-    
-    time_at_vmax = interp1(Vtacc1, tcc, Vmax);
-
-    assert(~isnan(time_at_vmax), ...
-        'Not enough simulation time given to reach max voltage!')
-    
-    idx = find(tcc < time_at_vmax);
-    zacc1 = zacc1(idx);
-    zbcc1 = zbcc1(idx);
-    Iacc1 = Iacc1(idx);
-    Ibcc1 = Ibcc1(idx);
-    Vtacc1 = Vtacc1(idx);
-    tcc1 = tcc(idx);
-
-    %% PART II: CV Charge SIMULATION
+    % Constant voltage charge
     tcv = [0:0.1:10*3600]';
+    cv1 = solve_cv(tcv, Ra, Rb, Qa, Qb, alpha, cc1.za(end), cc1.zb(end), Vmin, Vmax, I_current_cutoff); 
 
-    [zacv, zbcv, Iacv, Ibcv] = solve_cv(tcv, Ra, Rb, Qa, Qb, alpha, ...
-                                          zacc1(end), zbcc1(end), Vmin, Vmax); 
-
-    idx = find(abs(Iacv + Ibcv) < abs(I_current_cutoff));
-
-    assert(~isempty(idx), ...
-          'Not enough simulation time given to reach CV hold cut-off condition.')
-
-    zacv(idx) = [];
-    zbcv(idx) = [];
-    Iacv(idx) = [];
-    Ibcv(idx) = [];
-    Vtacv = ones(size(zacv)) * Vmax;
-    tcv(idx) = [];
-
-    %% Part III: CC Discharge Simulation
+    % Constant current discharge
     tcc2 = tcc;
-    
-    [zacc2, zbcc2, Iacc2, Ibcc2] = solve_cc(tcc2, I_dch, Ra, Rb, Qa, Qb, alpha, ...
-                                        zacv(end), zbcv(end));
+    cc2 = solve_cc(tcc2, I_dch, Ra, Rb, Qa, Qb, alpha, cv1.za(end), cv1.zb(end), ocv_fn, Vmin);
 
-    Vtacc2 = ocv_fn(zacc2) - Iacc2*Ra;
-    
-    time_at_vmin = interp1(Vtacc2, tcc, Vmin);
+    % Combine results
+    out.t = [cc1.t ; cc1.t(end) + cv1.t ; cc1.t(end) + cv1.t(end) + cc2.t];
+    out.Vt = [cc1.Vt ; cv1.Vt ; cc2.Vt];
+    out.za = [cc1.za ; cv1.za ; cc2.za];
+    out.zb = [cc1.zb ; cv1.zb ; cc2.zb];
+    out.Ia = [cc1.Ia ; cv1.Ia ; cc2.Ia];
+    out.Ib = [cc1.Ib ; cv1.Ib ; cc2.Ib];
+    out.t_chg_cc = cc1.t(end);
+    out.t_chg_cv = cc1.t(end) + cv1.t(end);
+    out.t_dch_cc = out.t(end);
 
-    idx = find(tcc2 < time_at_vmin);
-    zacc2 = zacc2(idx);
-    zbcc2 = zbcc2(idx);
-    Iacc2 = Iacc2(idx);
-    Ibcc2 = Ibcc2(idx);
-    tcc2 = tcc2(idx);
-    Vtacc2 = Vtacc2(idx);
+end
 
-    %% Concatenate the final output vector, combining the CC and CV results
-    za = [zacc1 ; zacv ; zacc2];
-    zb = [zbcc1 ; zbcv ; zbcc2];
-    tfinal = [tcc1 ; tcc1(end) + tcv ; tcc1(end) + tcv(end) + tcc2];
-    Ia = [Iacc1 ; Iacv ; Iacc2];
-    Ib = [Ibcc1 ; Ibcv ; Ibcc2];
-    Vta = [Vtacc1 ; Vtacv ; Vtacc2];
+function out = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vlim)
+    %% Solver for the constant current case
 
-    out.t = tfinal;
+    Z_SOLUTION_METHOD = 'analytic';
+
+    R = Ra + Rb;
+
+    z0 = [za0 zb0]';
+
+    switch Z_SOLUTION_METHOD
+
+        case 'lsim'
+
+            [A, B, C, D] = build_state_matrices_cc_mode(Ra, Rb, Qa, Qb, alpha);
+
+            sys = ss(A, B, C, D);
+            z = lsim(sys, I, t, z0);
+        
+            za = z(:, 1);
+            zb = z(:, 2);
+
+        case 'analytic'
+
+            Q = Qa + Qb;
+            u = I(1);
+
+            tau = (Ra + Rb) / alpha * (Qa * Qb) / Q;
+            kappa = 1/alpha * (Ra*Qa - Rb*Qb) / (Qa + Qb);
+
+            za = 1/Q * ( (Qa + Qb*exp(-t/tau))*za0 + Qb*(1-exp(-t/tau))*zb0 ) + ...
+                 1/Q * ( +Qb*kappa*(1-exp(-t/tau)) - t) * u;
+
+            zb = 1/Q * ( (Qa*(1-exp(-t/tau)))*za0 + (Qb + Qa*exp(-t/tau))*zb0 ) + ...
+                 1/Q * ( -Qa*kappa*(1-exp(-t/tau)) - t) * u;
+            
+    end
+  
+    % Get the branch currents
+    dz = za - zb;
+
+    Ia_ohmic = I*Rb / R;
+    Ia_rebal = +alpha*dz / R;
+    Ib_ohmic = I*Ra / R;
+    Ib_rebal = -alpha*dz / R;
+
+    Ia = Ia_ohmic + Ia_rebal;
+    Ib = Ib_ohmic + Ib_rebal;
+
+    Vt = ocv_fn(za) - Ia*Ra;
+
+    out.t = t;
+    out.Vt = Vt;
     out.za = za;
     out.zb = zb;
     out.Ia = Ia;
     out.Ib = Ib;
-    out.Vt = Vta;
-    out.t_chg_cc = tcc1(end);
-    out.t_chg_cv = tcc1(end) + tcv(end);
-    out.t_dch_cc = tfinal(end);
+    out.Ia_ohmic = Ia_ohmic;
+    out.Ia_rebal = Ia_rebal;
+    out.Ib_ohmic = Ib_ohmic;
+    out.Ib_rebal = Ib_rebal;
+
+    out = struct2table(out);
+
+    % Truncate data past Vlim
+    time_at_vlim = interp1(Vt, t, Vlim);
+    assert(~isnan(time_at_vlim), ...
+        'Not enough simulation time given to reach voltage limit.')
+
+    idx = find(t >= time_at_vlim);
+    out(idx, :) = [];
 
 end
 
-function [za, zb, Ia, Ib] = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0)
-    % Solver for the constant current case
 
-    z0 = [za0 zb0]';
+function out = solve_cv(t, Ra, Rb, Qa, Qb, alpha, za0, zb0, Vmin, Vmax, I_current_cutoff)
+    % Solver for the constant voltage case
 
-    [A, B, C, D] = build_state_matrices_cc_mode(Ra, Rb, Qa, Qb, alpha);
+    Z_SOLUTION_METHOD = 'analytic';
+
+    dU = Vmax - Vmin;
+    u = ones(size(t)) * dU;
     
-    sys = ss(A, B, C, D);
-    z = lsim(sys, I, t, z0);
+    switch Z_SOLUTION_METHOD
 
-    za = z(:, 1);
-    zb = z(:, 2);
- 
-    % Get the branch currents
-    dz = za - zb;
+        case 'lsim'
 
-    Ia = (+alpha*dz + I*Rb) / (Ra + Rb);
-    Ib = (-alpha*dz + I*Ra) / (Ra + Rb);   
+            [A, B, C, D] = build_state_matrices_cv_mode(Ra, Rb, Qa, Qb, alpha);
+            sys = ss(A, B, C, D);
+            sim_out = lsim(sys, u, t, [za0 ; zb0]);
+            
+            za = sim_out(:, 1);
+            zb = sim_out(:, 2);
+
+        case 'analytic'
+
+            taua = Qa*Ra/alpha;
+            taub = Qb*Rb/alpha;
+        
+            za = za0 * exp(-t./taua) - (1/alpha) * (exp(-t./taua) - 1) .* dU;
+            zb = zb0 * exp(-t./taub) - (1/alpha) * (exp(-t./taub) - 1) .* dU;
+
+    end
+
+    Ia1 = alpha*za / Ra;
+    Ia2 = -u / Ra;
+
+    Ib1 = alpha*zb / Rb;
+    Ib2 = -u / Rb;
+
+    Ia = Ia1 + Ia2;
+    Ib = Ib1 + Ib2;
+
+    Vt = ones(size(za)) * Vmax;
+    
+    out.t = t;
+    out.Vt = Vt;
+    out.za = za;
+    out.zb = zb;
+    out.Ia = Ia;
+    out.Ib = Ib;
+    out.Ia1 = Ia1;
+    out.Ia2 = Ia2;
+    out.Ib1 = Ib1;
+    out.Ib2 = Ib2;
+
+    out = struct2table(out);
+
+    % Truncate data past cutoff-current
+    idx = find(abs(Ia + Ib) <= abs(I_current_cutoff));
+    assert(~isempty(idx), ...
+          'Not enough simulation time provided to reach CV hold cut-off condition.')
+    out(idx, :) = [];
 
 end
+
 
 function [A, B, C, D] = build_state_matrices_cc_mode(Ra, Rb, Qa, Qb, alpha)
 
-    Alpha = [-alpha, alpha; 
-             alpha, -alpha];
+    Alpha = [-alpha, +alpha; 
+             +alpha, -alpha];
 
     q = [1/Qa 1/Qb]';
     r = [Rb Ra]';
@@ -143,33 +211,6 @@ function [A, B, C, D] = build_state_matrices_cc_mode(Ra, Rb, Qa, Qb, alpha)
 
 end
 
-function [za, zb, Ia, Ib] = solve_cv(t, Ra, Rb, Qa, Qb, alpha, za0, zb0, Vmin, Vmax)
-    % Solver for the constant voltage case
-
-    dU = Vmax - Vmin;
-
-    u = ones(size(t)) * dU;
-    
-    % Solution using lsim
-    [A, B, C, D] = build_state_matrices_cv_mode(Ra, Rb, Qa, Qb, alpha);
-    sys = ss(A, B, C, D);
-    out = lsim(sys, u, t, [za0 ; zb0]);
-    
-    za = out(:, 1);
-    zb = out(:, 2);
-    
-    taua = Qa*Ra/alpha;
-    taub = Qb*Rb/alpha;
-
-    % Analytical form
-    za = za0 * exp(-t./taua) - (1/alpha) * (exp(-t./taua) - 1) .* dU;
-    zb = zb0 * exp(-t./taub) - (1/alpha) * (exp(-t./taub) - 1) .* dU;
-
-    Ia = (alpha*za - dU) / Ra;
-    Ib = (alpha*zb - dU) / Rb;
-
-    
-end
 
 function [A, B, C, D] = build_state_matrices_cv_mode(Ra, Rb, Qa, Qb, alpha)
 
