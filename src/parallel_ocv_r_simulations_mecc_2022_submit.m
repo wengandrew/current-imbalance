@@ -21,10 +21,10 @@ function parallel_ocv_r_simulations_mecc_2022_submit()
     I = current_target*ones(size(t)); % applied current (A) 
 
     %% Make the plots
-    plot_dz_ss_sensitivity(Ra, current_target, alpha)
+    plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
     plot_di_ss_sensitivity(Qa, Ra, current_target)
-    plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
-    plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
+%     plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
+%     plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
     
 end
 
@@ -60,7 +60,7 @@ function plot_tau_sensitivity(Qa, Ra, alpha)
 
 end
 
-function plot_dz_ss_sensitivity(Ra, current_target, alpha)
+function plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
 
     set_default_plot_settings_manuscript()
 
@@ -75,28 +75,49 @@ function plot_dz_ss_sensitivity(Ra, current_target, alpha)
         end
     end
 
-    % Highlight the special solution for zero delta zz.
-    rr_special = rr;
-    qq_special = 1./rr_special;
+    c1 = [0.7, 0.7, 0.7];
+    c2 = [1, 1, 1];
+    c3 = [0.4, 0.4, 0.4];
 
     fh = figure('Position', [500 100 400*1.5 400*1.5]);
 
-    line(rr_special, qq_special, ...
-        'LineWidth', 5, ...
+    [C,h] = contourf(qq, rr, dz_ss, [-0.04 -0.02 -0.01 0 0.01 0.02 0.04], ...
+                                 'ShowText', 'on', 'LineColor', c3, ...
+                                 'Parent', gca, 'LabelSpacing', 270, ...
+                                 'HandleVisibility', 'off');
+    
+    clabel(C, h, [-0.02, -0.01 0.01 0.02 0.04], 'FontSize', 15, ...
+                                      'Color', c3, 'Interpreter', 'Latex')
+
+    colormap([c2; c2; c1; c1; c1; c1; c1])
+    
+    line([0.5 1.5], [1 1], 'Color', [0.3 0.3 0.3], ...
+                           'LineStyle', ':', ...
+                           'LineWidth', 1.0, 'HandleVisibility', 'off')
+
+    line([1 1], [0.5 1.5], 'Color', [0.3 0.3 0.3], ...
+                           'LineStyle', ':', ...
+                           'LineWidth', 1.0, 'HandleVisibility', 'off')
+
+    rectangle('Position', [0.5 1 0.5 0.5], 'EdgeColor',' r', ...
+              'LineWidth', 3, 'LineStyle', '-', 'FaceColor', [1 0 0 0.07])
+
+    line(rr, 1./rr, ...
+        'LineWidth', 3, ...
         'Color',' k', ...
-        'LineStyle', ':', ...
+        'LineStyle', '--', ...
         'Parent', gca, ...
         'DisplayName', '$q=r^{-1}$'); hold all;
 
-    [C,h] = contour(qq, rr, dz_ss, 'LabelSpacing', 300, ...
-                                 'ShowText', 'on', 'LineColor', 'k', ...
-                                 'Parent', gca, ...
-                                 'HandleVisibility', 'off');
-
-    clabel(C, h, 'FontSize', 24, 'Color', 'k', 'FontName', 'Times New Roman')
+    text(1.25, 0.86, '$q=r^{-1}$', ...
+                     'Interpreter', 'Latex', 'FontSize', 22', 'Rotation', -33)
+    text(0.60, 0.90, '$z_{ss,a} > z_{ss,b}$', ...
+                     'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c1)
+    text(1.10, 1.10, '$z_{ss,a} < z_{ss,b}$', ...
+                     'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c2)
 
     q_vec = [1, 0.8, 1];
-    r_vec = [1, 1.25, 1.5];
+    r_vec = [1, 1.25, 1.25];
     marker_vec = {'o', 's', '^'};
 
     for i = 1:numel(q_vec)
@@ -114,20 +135,15 @@ function plot_dz_ss_sensitivity(Ra, current_target, alpha)
 
     end
 
-    lh = legend('show'); set(lh, 'Interpreter', 'Latex', ...
-                                 'Location', 'SouthWest')
-
-    box on;
-
     set(findobj(gca,'Type','patch','UserData',2),'EdgeColor',[0 0 0])
-    yline(1, 'LineStyle', ':', 'HandleVisibility', 'off')
-    xline(1, 'LineStyle', ':', 'HandleVisibility', 'off')
+
     xlim([min(rr), max(rr)])
     ylim([min(qq), max(qq)])
 
     ylabel('$r$ = $R_a/R_b$', 'Interpreter', 'Latex')
     xlabel('$q$ = $Q_a/Q_b$', 'Interpreter', 'Latex')
-    title('$\Delta z_{ss}$', 'Interpreter', 'Latex')
+    title('$\Delta z_{ss} = z_{ss,a} - z_{ss,b}$', 'Interpreter', 'Latex')
+    box on;
 
     saveas(fh, 'figures/fig_dz_ss_sensitivity.png')
 
@@ -137,7 +153,6 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
 
     set_default_plot_settings_manuscript()
 
-    %% Delta I_ss plot
     rr = linspace(0.5, 1.5, 101);
     qq = linspace(0.5, 1.5, 100);
 
@@ -150,26 +165,43 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
                 (  2*(Ra*Qa - Rb*Qb)/((Ra+Rb)*(Qa+Qb)) - (Ra-Rb)/(Ra+Rb) );
         end
     end
-   
+
     fh = figure('Position', [500 100 400*1.5 400*1.5]);
 
-    line(ones(size(qq)), qq, ...
-        'LineWidth', 5, ...
-        'Color',' k', ...
-        'LineStyle', ':', ...
-        'Parent', gca, ...
-        'DisplayName', '$q=1$'); hold all;
-    
-    [C,h] = contour(qq, rr, di_ss, 'LabelSpacing', 300, ...
-                                    'ShowText', 'on', 'LineColor', 'k', ...
-                                    'Parent', gca, ...
-                                    'HandleVisibility', 'off');
+    c1 = [0.7, 0.7, 0.7];
+    c2 = [1, 1, 1];
+    c3 = [0.4, 0.4, 0.4];
 
-    box on;
+    [C,h] = contourf(qq, rr, di_ss, [-0.6:0.2:0.6], ...
+                                 'ShowText', 'off', 'LineColor', c3, ...
+                                 'Parent', gca, 'LabelSpacing', 250, ...
+                                 'HandleVisibility', 'off');
+
+    
+    clabel(C, h, [-0.2, 0.2, 0.4], 'FontSize', 15, 'Color', c3, 'Interpreter', 'Latex')
+
+    colormap([c1; c1; c2; c2; c2; c2; c2])
+
+    line([0.5 1.5], [1 1], 'Color', [0.3 0.3 0.3], 'LineStyle', ':', 'LineWidth', 1.0, 'HandleVisibility', 'off')
+    line([1 1], [0.5 1.5], 'Color', [0.3 0.3 0.3], 'LineStyle', ':', 'LineWidth', 1.0, 'HandleVisibility', 'off')
+
+    rectangle('Position', [0.5 1 0.5 0.5], 'EdgeColor',' r', ...
+              'LineWidth', 3, 'LineStyle', '-', 'FaceColor', [1 0 0 0.07])
+
+
+    line(ones(size(qq)), qq, ...
+    'LineWidth', 3, ...
+    'Color',' k', ...
+    'LineStyle', '--', ...
+    'Parent', gca, ...
+    'DisplayName', '$q=1$'); hold all;
 
     q_vec = [1, 0.8, 1];
-    r_vec = [1, 1.25, 1.5];
+    r_vec = [1, 1.25, 1.25];
     marker_vec = {'o', 's', '^'};
+
+    text(0.57, 0.90, '$|I_{ss,a}| < |I_{ss,b}|$', 'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c2)
+    text(1.07, 1.10, '$|I_{ss,a}| > |I_{ss,b}|$', 'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c1)
 
     for i = 1:numel(q_vec)
 
@@ -186,20 +218,15 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
 
     end
 
-
-    lh = legend('show'); set(lh, 'Interpreter', 'Latex', ...
-                                 'Location', 'SouthWest')
-
-    clabel(C, h, 'FontSize', 24, 'Color', 'k', ...
-        'FontName', 'Times New Roman', 'Interpreter', 'Latex')
     set(findobj(gca,'Type','patch','UserData',2),'EdgeColor',[0 0 0])
-    yline(1, 'LineStyle', ':', 'HandleVisibility', 'off')
-    xline(1, 'LineStyle', ':', 'HandleVisibility', 'off')
+
     xlim([min(rr), max(rr)])
     ylim([min(qq), max(qq)])
+
     ylabel('$r$ = $R_a/R_b$', 'Interpreter', 'Latex')
     xlabel('$q$ = $Q_a/Q_b$', 'Interpreter', 'Latex')
-    title('$\Delta I_{ss}$ (A)', 'Interpreter', 'Latex')
+    title('$\Delta I_{ss} = I_{ss,a} - I_{ss,b}$ (A)', 'Interpreter', 'Latex')
+    box on;
 
     saveas(fh, 'figures/fig_di_ss_sensitivity.png')
 
