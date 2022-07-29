@@ -1,4 +1,4 @@
-function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
+function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
                cv_cutoff_current_amps, Qa, Qb, Ra, Rb, za0, zb0, f_ocv, ...
                Vmin, Vmax)
     % Discrete-time simulation of the current imbalance system
@@ -11,7 +11,6 @@ function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
     %
     % Parameters
     % ---------
-    %   dt:      simulation time step (seconds)
     %   I_chg:   input current vector in Amperes for charge (+ve is discharge)
     %   I_dch:   input current vector in Amperes for discharge (+ve is discharge)
     %   cv_cutoff_current_amps: cutoff condition for the CV hold (Amperes)
@@ -39,6 +38,8 @@ function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
 
     R = Ra + Rb;
 
+    dt = 0.1;
+
 
     % Initialize arrays and initial conditions. We don't how big the arrays
     % will need to be so we just allocate a little bit to start with. At
@@ -60,6 +61,8 @@ function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
     % Main loop for CCCV charging
     k = 1;
 
+    t_chg_cc = 0;
+
     while true
         
         fprintf('CC Charge Step %g: %.3f V\n', k, Vt(k))
@@ -74,7 +77,14 @@ function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
 
         % Check for potentiostatic (CV) mode, in which case update current
         % while holding potential constant
+
         if Vt(k+1) >= Vmax
+
+            % Update time counters
+            if t_chg_cc == 0
+                t_chg_cc = dt*k;
+            end
+            t_chg_cv = dt*k;
 
             fprintf('CV Charge Step %g: %.3f V\n', k, Vt(k))
 
@@ -85,12 +95,15 @@ function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
 
             I_chg(k+1) = ( f_ocv(za(k))*Rb + f_ocv(zb(k))*Ra - Vmax*(Ra+Rb) ) / (Ra*Rb);
         
+    
         end
 
         tt(k+1) = dt*k;
         k = k + 1;
 
     end
+
+
 
     % Main loop for discharging
     k2 = k;
@@ -127,6 +140,8 @@ function out = run_discrete_time_simulation_complete(dt, I_chg, I_dch, ...
 
     % Assemble output as a struct
     out.t = tt;
+    out.t_chg_cc = t_chg_cc;
+    out.t_chg_cv = t_chg_cv;
     out.za = za;
     out.zb = zb;
     out.Ia = Ia;

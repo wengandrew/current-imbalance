@@ -52,8 +52,16 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     out.Vt = [cc1.Vt ; cv1.Vt ; cc2.Vt];
     out.za = [cc1.za ; cv1.za ; cc2.za];
     out.zb = [cc1.zb ; cv1.zb ; cc2.zb];
+    out.za_ohmic = [cc1.za_ohmic ; cv1.za_ohmic ; cc2.za_ohmic];
+    out.za_rebal = [cc1.za_rebal ; cv1.za_rebal ; cc2.za_rebal];
+    out.zb_ohmic = [cc1.zb_ohmic ; cv1.zb_ohmic ; cc2.zb_ohmic];
+    out.zb_rebal = [cc1.zb_rebal ; cv1.zb_rebal ; cc2.zb_rebal];
     out.Ia = [cc1.Ia ; cv1.Ia ; cc2.Ia];
     out.Ib = [cc1.Ib ; cv1.Ib ; cc2.Ib];
+    out.Ia_ohmic = [cc1.Ia_ohmic ; cv1.Ia_ohmic ; cc2.Ia_ohmic];
+    out.Ia_rebal = [cc1.Ia_rebal ; cv1.Ia_rebal ; cc2.Ia_rebal];
+    out.Ib_ohmic = [cc1.Ib_ohmic ; cv1.Ib_ohmic ; cc2.Ib_ohmic];
+    out.Ib_rebal = [cc1.Ib_rebal ; cv1.Ib_rebal ; cc2.Ib_rebal];
     out.t_chg_cc = cc1.t(end);
     out.t_chg_cv = cc1.t(end) + cv1.t(end);
     out.t_dch_cc = out.t(end);
@@ -89,11 +97,13 @@ function out = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vlim)
             tau = (Ra + Rb) / alpha * (Qa * Qb) / Q;
             kappa = 1/alpha * (Ra*Qa - Rb*Qb) / (Qa + Qb);
 
-            za = 1/Q * ( (Qa + Qb*exp(-t/tau))*za0 + Qb*(1-exp(-t/tau))*zb0 ) + ...
-                 1/Q * ( +Qb*kappa*(1-exp(-t/tau)) - t) * u;
+            za_rebal = 1/Q * ( (Qa + Qb*exp(-t/tau))*za0 + Qb*(1-exp(-t/tau))*zb0 );
+            za_ohmic = 1/Q * ( +Qb*kappa*(1-exp(-t/tau)) - t) * u;
+            za = za_rebal + za_ohmic;
 
-            zb = 1/Q * ( (Qa*(1-exp(-t/tau)))*za0 + (Qb + Qa*exp(-t/tau))*zb0 ) + ...
-                 1/Q * ( -Qa*kappa*(1-exp(-t/tau)) - t) * u;
+            zb_rebal = 1/Q * ( (Qa*(1-exp(-t/tau)))*za0 + (Qb + Qa*exp(-t/tau))*zb0 );
+            zb_ohmic = 1/Q * ( -Qa*kappa*(1-exp(-t/tau)) - t) * u;
+            zb = zb_rebal + zb_ohmic;
             
     end
   
@@ -114,6 +124,10 @@ function out = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vlim)
     out.Vt = Vt;
     out.za = za;
     out.zb = zb;
+    out.za_rebal = za_rebal;
+    out.za_ohmic = za_ohmic;
+    out.zb_rebal = zb_rebal;
+    out.zb_ohmic = zb_ohmic;
     out.Ia = Ia;
     out.Ib = Ib;
     out.Ia_ohmic = Ia_ohmic;
@@ -124,7 +138,7 @@ function out = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vlim)
     out = struct2table(out);
 
     % Truncate data past Vlim
-    time_at_vlim = interp1(Vt, t, Vlim);
+    time_at_vlim = interp1(Vt(~isnan(Vt)), t(~isnan(Vt)), Vlim);
     assert(~isnan(time_at_vlim), ...
         'Not enough simulation time given to reach voltage limit.')
 
@@ -178,12 +192,16 @@ function out = solve_cv(t, Ra, Rb, Qa, Qb, alpha, za0, zb0, Vmin, Vmax, I_curren
     out.Vt = Vt;
     out.za = za;
     out.zb = zb;
+    out.za_ohmic = nan*ones(size(t));
+    out.za_rebal = nan*ones(size(t));
+    out.zb_ohmic = nan*ones(size(t));
+    out.zb_rebal = nan*ones(size(t));
     out.Ia = Ia;
     out.Ib = Ib;
-    out.Ia1 = Ia1;
-    out.Ia2 = Ia2;
-    out.Ib1 = Ib1;
-    out.Ib2 = Ib2;
+    out.Ia_ohmic = nan*ones(size(t));
+    out.Ia_rebal = nan*ones(size(t));
+    out.Ib_ohmic = nan*ones(size(t));
+    out.Ib_rebal = nan*ones(size(t));
 
     out = struct2table(out);
 
