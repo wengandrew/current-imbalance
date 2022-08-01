@@ -26,7 +26,7 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
     %
     % Outputs
     % --------
-    %      
+    %   out:     a struct holding simulation outputs
     %
     %   
     % Assumptions
@@ -34,7 +34,7 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
     %  - fixed time-step simulation
     %  - charge simulation ends on Vmax
     %
-    % The simulation does not assume constant current
+    % The simulation does not need to assume constant current input
 
     R = Ra + Rb;
 
