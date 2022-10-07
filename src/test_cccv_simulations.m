@@ -23,7 +23,7 @@ function test_cccv_simulations()
 
     %% Test the analytic solution
     % Initialize simulation vectors
-    t = linspace(0, 6*3600, 1e4)';
+    t = linspace(0, 6*3600, 5e4)';
     I = current_target*ones(size(t)); % applied current (A) 
 
     [tfinal, za, zb, Ia, Ib] = solve_z_dynamics_cccv(t, I, ...
@@ -33,8 +33,8 @@ function test_cccv_simulations()
     %% Test the simulation based solution
     ocv_lin = @(z) U0 + alpha * z;
 
-    out = run_discrete_time_simulation_complete(I, -I, abs(I/20), Qa, Qb, Ra, Rb, ...
-            za0, zb0, ocv_lin, Vmin, Vmax);
+    out = run_discrete_time_simulation_cccv(t, I, Qa, Qb, Ra, Rb, ...
+            za0, zb0, ocv_lin, Vmax);
 
 
     % See the results
