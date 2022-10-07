@@ -1,11 +1,9 @@
 function test_lifetime_simulation()
-    % Run lifetime simulation for two parallel-connected batteries
+    % Run lifetime simulation with the discrete SEI growth model
     %
-    % 2022/07/29
-    % - Use the imbalance dynamics equations to simulate intra-cycle dynamics
-    % - At the end of each cycle, compute aggregate metrics and us it to
-    %   update the capacities and resistances.
-    % - Repeat.
+    % 2022/08/03
+    % - just demonstrate how we can use the discrete update version of the
+    %   SEI growth model to handle changing use cases.
 
 
     % Initialize the system
@@ -13,19 +11,19 @@ function test_lifetime_simulation()
 
     % Define end condition
     dQa_vec = 0;
-    dQb_vec = 0;
     dRa_vec = 0;
-    dRb_vec = 0;
-    Issa_vec = nan;
-    Issb_vec = nan;
-    zssa_vec = nan;
-    zssb_vec = nan;
+    dQa1_vec = 0;
+    dRa1_vec = 0;
+    dQa2_vec = 0;
+    dRa2_vec = 0;
 
     % Initialize loop variables
     preva.dQ = 0;
-    prevb.dQ = 0;
     preva.dR = 0;
-    prevb.dR = 0;
+    preva1.dQ = 0;
+    preva1.dR = 0;
+    preva2.dQ = 0;
+    preva2.dR = 0;
 
     MAX_CYCLE_NUMBER = 1000;
     cyc_num_vec = 0;
@@ -52,34 +50,22 @@ function test_lifetime_simulation()
     
         fprintf('Simulating cycle %g ...\n', cyc_num)
 
-        % Solve for the intra-cycle dynamics
-        %
-        % curr: struct holding current (Ra, Rb, Qa, Rb)
-        % prev: struct holding previous (Ra, Rb, Qa, Rb)
-        Qa = p.Qa - preva.dQ;
-        Qb = p.Qb - prevb.dQ;
-        Ra = p.Ra + preva.dR;
-        Rb = p.Rb + prevb.dR;
-
         % Update capacity loss and resistance growth increment for this cycle
         delta_time = hours_to_charge * 3600;
 
-        [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, alpha, I_chg(1), za0, zb0, delta_time);
-        
-        curra = update_states_iss(preva, delta_time, Issa);
-        currb = update_states_iss(prevb, delta_time, Issb);
+        curra = update_states_simple(preva, delta_time, cyc_num);
+        curra1 = update_states_simple(preva1, delta_time, 1);
+        curra2 = update_states_simple(preva2, delta_time, 900);
 
         dQa_vec = [dQa_vec ; curra.dQ];
-        dQb_vec = [dQb_vec ; currb.dQ];
         dRa_vec = [dRa_vec ; curra.dR];
-        dRb_vec = [dRb_vec ; currb.dR];
-        Issa_vec = [Issa_vec ; Issa];
-        Issb_vec = [Issb_vec ; Issb];
-        zssa_vec = [zssa_vec ; zssa];
-        zssb_vec = [zssb_vec ; zssb];
-
+        dQa1_vec = [dQa1_vec ; curra1.dQ];
+        dRa1_vec = [dRa1_vec ; curra1.dR];
+        dQa2_vec = [dQa2_vec ; curra2.dQ];
+        dRa2_vec = [dRa2_vec ; curra2.dR];
         preva = curra;
-        prevb = currb;
+        preva1 = curra1;
+        preva2 = curra2;
 
         cyc_num_vec = [cyc_num_vec; cyc_num];
         cyc_num = cyc_num + 1;
@@ -89,106 +75,63 @@ function test_lifetime_simulation()
     set_default_plot_settings()
 
     figure('Position', [10 10 700 600].*1.5);
-    subplot(221)
-    line(cyc_num_vec, (p.Qa - dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec, (p.Qb - dQb_vec)./3600, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+    subplot(211)
+    line(cyc_num_vec, (p.Qa - dQa1_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Usage A');
+    line(cyc_num_vec, (p.Qa - dQa2_vec)./3600, 'Color', 'b', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Usage B');
+    line(cyc_num_vec, (p.Qa - dQa_vec)./3600, 'Color', 'k', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 1.5, 'DisplayName', 'Usage A $\rightarrow$ B');
     xlabel('Cycle Number', 'Interpreter', 'Latex')
     ylabel('Capacity (Ah)', 'Interpreter', 'Latex')
+    ylim([0 5])
     lh = legend('show');
 
-    subplot(222)
-    line(cyc_num_vec, (p.Ra + dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec, (p.Rb + dRb_vec).*1000, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+    subplot(212)
+    line(cyc_num_vec, (p.Ra + dRa1_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Usage A');
+    line(cyc_num_vec, (p.Ra + dRa2_vec).*1000, 'Color', 'b', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Usage B');
+    line(cyc_num_vec, (p.Ra + dRa_vec).*1000, 'Color', 'k', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 1.5, 'DisplayName', 'Usage A $\rightarrow$ B');
     xlabel('Cycle Number', 'Interpreter', 'Latex')
     ylabel('Resistance (m$\Omega$)', 'Interpreter', 'Latex')
-    lh = legend('show');
-
-    subplot(223)
-    line(cyc_num_vec, Issa_vec, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec, Issb_vec, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
-    xlabel('Cycle Number', 'Interpreter', 'Latex')
-    ylabel('$I_{ss}$ (A)', 'Interpreter', 'Latex')
-    lh = legend('show');
-
-    subplot(224)
-    line(cyc_num_vec, zssa_vec, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec, zssb_vec, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
-    xlabel('Cycle Number', 'Interpreter', 'Latex')
-    ylabel('$z_{ss}$', 'Interpreter', 'Latex')
-    lh = legend('show');
+    lh = legend('show', 'Interpreter', 'Latex');
 
 end
 
-function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, alpha, I, za0, zb0, dt)
-    % Compute steady-state values
+function curr = update_states_simple(prev, delta_time, cyc_num)
+    % Q-R state update function 
+    %
+    % Parameters
+    % ---------
+    % prev (struct)
+    %    previous state (includes dQ and dR)
+    % delta_time (float)
+    %    time for the cycle
+    % Iss (float)
+    %    steady-state current value in Amperes
+    %
+    % Outputs
+    % ---------
+    % curr
+    %    updated state
 
-    Q = Qa + Qb;
-    R = Ra + Rb;
-
-    kappa = 1/alpha * (Ra*Qa - Rb*Qb) / Q;
-
-    Issa = 1/R * ((Rb + alpha*kappa))*I;
-    Issb = 1/R * ((Ra - alpha*kappa))*I;
-    
-    zssa = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (+Qb*kappa - dt) * I;
-    zssb = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (-Qa*kappa - dt) * I;
-
-    % For future consideration, we can also run a full discrete-time
-    % simulation here:
-
-%         out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
-%                cv_cutoff_current_amps, Qa, Qb, Ra, Rb, za0, zb0, f_ocv, ...
-%                Vmin, Vmax);
-
-%         out = solve_z_dynamics_cccv_complete(t, ...
-%               I_chg, I_dch, I_current_cutoff, alpha, ...
-%               curr.Ra, curr.Rb, curr.Qa, curr.Qb, za0, zb0, ...
-%               f_ocv, Vmin, Vmax);
-
-end
-
-function curr = update_states_simple(prev, delta_time)
-    % Simple form of the Q-R state update equation based on a constant
-    % reaction rate constant k
     n = 0.5;
 
-    k = 1;
-
+    % Actually we're going to change the k after some number of cycles,
+    % just to demonstrate the idea of dynamically updating k values based
+    % on changing use cases
+    if cyc_num < 500
+        kc = 1;
+        kr = 0.00001;
+    else 
+        kc = 2;
+        kr = 0.00002;
+    end
+    
     % Discrete state update equation for SEI growth
-    curr.dQ = (k^(1/n) * delta_time + prev.dQ^(1/n))^n;
-    
-    % Ignore the resistance update for now; come back to this once we
-    % figure out what we're doing for the capacity updates.
-    curr.dR = prev.dR;
-
-end
-
-function curr = update_states_iss(prev, delta_time, Iss)
-    % Q-R state update function based on steady-stateu current imbalance
-    % values
-
-    n = 0.5;
-    
-    % Update rate constants for capacities and resistances
-    gamma_q = 8;
-    kq = gamma_q*abs(Iss);
-
-    gamma_r = 0.00005;
-    kr = gamma_r*abs(Iss);
-
-    % Discrete state update equation for SEI growth
-    curr.dQ = (kq^(1/n) * delta_time + prev.dQ^(1/n))^n;
-    
-    % Ignore the resistance update for now; come back to this once we
-    % figure out what we're doing for the capacity updates.
+    curr.dQ = (kc^(1/n) * delta_time + prev.dQ^(1/n))^n;
     curr.dR = (kr^(1/n) * delta_time + prev.dR^(1/n))^n;
-    
+
 end
