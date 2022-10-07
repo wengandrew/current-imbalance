@@ -1,4 +1,4 @@
-function test_cccv_simulations()
+function parallel_ocv_r_cccv_simulations()
     % Verify the behavior of the code that runs CC-CV simulations
 
     set_default_plot_settings_manuscript()
