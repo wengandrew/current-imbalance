@@ -1,18 +1,17 @@
-function test_full_charge_discharge_simulations()
-    % Verify the behavior of the code that runs the full charge-discharge
-    % simulation
+function parallel_ocv_r_full_charge_discharge_simulation()
+    % Run a full charge CCCV and discharge CC simulation
 
     set_default_plot_settings_manuscript()
 
     CHEMISTRY = 'nmc';
 
     % Initialize model parameters
-    Ra = 0.05; % ohms
-    Qa = 5 * 3600; % As
-    za0 = 0.00;
-    zb0 = 0.00;
-    q = 0.8;
-    r = 1.25;
+    Ra  = 0.05; % ohms
+    Qa  = 5 * 3600; % As
+    za0 = 0.50;
+    zb0 = 0.35;
+    q   = 0.7;
+    r   = 1.1;
 
     switch CHEMISTRY
         case 'lfp'
