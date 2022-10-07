@@ -90,13 +90,13 @@ function parallel_ocv_r_simulations_discrete_time()
 
     % Plot the OCV curves
     zz = linspace(0, 1, 1000);
-%     line(zz, ocv_lfp(zz), 'Color', 'b', 'Parent', ax6)
+    line(zz, ocv_lfp(zz), 'Color', 'b', 'Parent', ax_voc)
     line(zz, ocv_lin(zz), 'Color', 'k', 'LineStyle', '-', ...
                 'DisplayName', 'Analytic', 'Parent', ax_voc)
     line(zz, ocv_nmc(zz), 'Color', 'r', ...
                 'DisplayName', 'NMC', 'Parent', ax_voc)
-    line(zz, ocv_nmc_piecewise(zz), 'Color', 'r', ...
-                'DisplayName', 'NMCLinPiecewise', 'LineStyle', '--', 'Parent', ax_voc)
+%     line(zz, ocv_nmc_piecewise(zz), 'Color', 'r', ...
+%                 'DisplayName', 'NMCLinPiecewise', 'LineStyle', '--', 'Parent', ax_voc)
 %     legend(ax6, 'LFP', 'NMC', 'Linear')
 %     legend(ax_voc, 'show')
 
@@ -122,15 +122,15 @@ function parallel_ocv_r_simulations_discrete_time()
 
     % Do the LFP scenario
 %     Vmax = 3.6;
-%     [t, za, zb, Ia, Ib, Vt, idx] = run_discrete_time_simulation(torig, ...
-%           I, Qa, Qb, Ra, Rb, za0, zb0, ocv_lfp, Vmax);
-%     line(t./3600, za - zb, 'Color', 'b', 'Parent', ax1)
-%     line(t./3600, za, 'Color', 'b', 'Parent', ax2)
-%     line(t./3600, zb, 'Color', 'b', 'Parent', ax2)
-%     line(t./3600, Ia - Ib, 'Color', 'b', 'Parent', ax4)
-%     line(t./3600, Ia, 'Color', 'b', 'Parent', ax5)
-%     line(t./3600, Ib, 'Color', 'b', 'Parent', ax5)
-%     line(t./3600, Vt, 'Color', 'b', 'Parent', ax3)
+%     lfp = run_discrete_time_simulation(torig, I, Qa, Qb, Ra, Rb, ...
+%         za0, zb0, ocv_lfp, Vmax);
+%     line(lfp.t./3600, lfp.za - lfp.zb, 'Color', 'b', 'DisplayName', 'LFP', 'Parent', ax_dz)
+%     line(lfp.t./3600, lfp.za, 'Color', 'b', 'Parent', ax_z)
+%     line(lfp.t./3600, lfp.zb, 'Color', 'b', 'Parent', ax_z)
+%     line(lfp.t./3600, lfp.Ia - lfp.Ib, 'Color', 'b', 'Parent', ax_di)
+%     line(lfp.t./3600, lfp.Ia, 'Color', 'b', 'Parent', ax_i)
+%     line(lfp.t./3600, lfp.Ib, 'Color', 'b', 'Parent', ax_i)
+%     line(lfp.t./3600, lfp.Vt, 'Color', 'b', 'Parent', ax_vt)
 
     % Do the NMC scenario
     Vmax = 4.2;
@@ -146,8 +146,8 @@ function parallel_ocv_r_simulations_discrete_time()
     line(nmc.t./3600, nmc.Vt, 'Color', 'r', 'Parent', ax_vt)
 
 
-    line(nmcpw.t./3600, nmcpw.za - nmcpw.zb, 'Color', 'r', ...
-        'DisplayName', 'NMCLinPiecewise', 'LineStyle', '--', 'Parent', ax_dz)
+%     line(nmcpw.t./3600, nmcpw.za - nmcpw.zb, 'Color', 'r', ...
+%         'DisplayName', 'NMCLinPiecewise', 'LineStyle', '--', 'Parent', ax_dz)
 
     lh = legend(ax_dz, 'show'); set(lh, 'Location', 'NorthEast')
 %     legend(ax4, 'LinPiecewise', 'Analytic', 'NMC')

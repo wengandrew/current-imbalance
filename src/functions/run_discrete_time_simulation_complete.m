@@ -38,7 +38,7 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
 
     R = Ra + Rb;
 
-    dt = 0.1;
+    dt = 1;
 
 
     % Initialize arrays and initial conditions. We don't how big the arrays
