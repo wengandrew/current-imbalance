@@ -1,5 +1,7 @@
 function parallel_ocv_r_nonlin_map()
     % Build steady-state imbalance maps for the nonlinear case
+    %
+    % This code will take some time to complete
 
     clear all; close all; clc
 

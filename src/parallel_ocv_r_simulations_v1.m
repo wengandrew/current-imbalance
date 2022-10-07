@@ -1,4 +1,4 @@
-function parallel_ocv_r_simulations_mecc_2022_submit()
+function parallel_ocv_r_simulations_v1()
     %% Andrew Weng
     %
     % Code used for MECC 2022 submission, April 22, 2022
@@ -23,8 +23,8 @@ function parallel_ocv_r_simulations_mecc_2022_submit()
     %% Make the plots
     plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
     plot_di_ss_sensitivity(Qa, Ra, current_target)
-    plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
-    plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
+%     plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
+%     plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
     
 end
 

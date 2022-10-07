@@ -1,4 +1,4 @@
-function parallel_ocv_r_simulations()
+function parallel_ocv_r_simulations_v0()
     %% Andrew Weng
     %% 4/1/2022
 
