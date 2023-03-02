@@ -3,14 +3,27 @@ function parallel_ocv_r_cccv_simulations()
 
     set_default_plot_settings_manuscript()
 
+    analysis_type = 'lfp';
+
+    switch analysis_type
+        case 'lfp'
+            alpha = 0.6;
+            Vmax = 3.6;
+            ocv = load_ocv_fn('lfp');
+        case 'nmc'
+            alpha = 1.2;
+            Vmax = 4.2;
+            ocv = load_ocv_fn('nmc');
+    end
+
     % Initialize model parameters
     Ra = 0.05; % ohms
     Qa = 5 * 3600; % As
-    alpha = 1.2;
+    alpha_nmc = 1.2;
+    alpha_lfp = 0.6;
     za0 = 0.85;
     zb0 = 0.75;
     U0  = 3.0;
-    Vmax = 4.2;
     Vmin = 3.0;
 
     q = 0.6;
@@ -21,6 +34,7 @@ function parallel_ocv_r_cccv_simulations()
     
     current_target = -Qa / (3 * 3600);
 
+    
     %% Test the analytic solution
     % Initialize simulation vectors
     t = linspace(0, 6*3600, 5e4)';
@@ -31,10 +45,8 @@ function parallel_ocv_r_cccv_simulations()
 
 
     %% Test the simulation based solution
-    ocv_lin = @(z) U0 + alpha * z;
-
     out = run_discrete_time_simulation_cccv(t, I, Qa, Qb, Ra, Rb, ...
-            za0, zb0, ocv_lin, Vmax);
+            za0, zb0, ocv, Vmax);
 
 
     % See the results
@@ -58,7 +70,8 @@ function parallel_ocv_r_cccv_simulations()
     legend show
 
     ax3 = subplot(313);
-    line(out.t./3600, out.Vt, 'Color', 'k', 'DisplayName', 'Simulated')
+    line(tfinal/3600, U0 + alpha*za - Ia*Ra, 'Color', 'k', 'DisplayName', 'Analytic')
+    line(out.t./3600, out.Vt, 'Color', 'k', 'LineStyle', ':', 'DisplayName', 'Simulated')
     xlabel('Time (hrs)')
     ylabel('Voltage (V)')
     legend show
