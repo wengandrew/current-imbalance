@@ -74,7 +74,9 @@ function test_lifetime_simulation_with_imbalance()
         % Update capacity loss and resistance growth increment for this cycle
         delta_time = hours_to_charge * 3600;
 
-        [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, alpha, I_chg(1), za0, zb0, delta_time);
+        [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, alpha, ...
+            I_chg, I_dch, I_current_cutoff, za0, zb0, delta_time, ...
+            f_ocv, Vmin, Vmax);
         
         curra = update_states_iss(preva, delta_time, Issa);
         currb = update_states_iss(prevb, delta_time, Issb);
@@ -105,9 +107,16 @@ function test_lifetime_simulation_with_imbalance()
         cyc_num_vec = [cyc_num_vec; cyc_num];
         cyc_num = cyc_num + 1;
 
+        if Qa < 0.5 * 3600
+            break
+        end
+        if Qb < 0.5 * 3600
+            break
+        end
+
     end
 
-    set_default_plot_settings()
+    set_default_plot_settings_manuscript()
 
     figure('Position', [10 10 700 600].*1.5);
     subplot(221)
@@ -157,31 +166,62 @@ function test_lifetime_simulation_with_imbalance()
 
 end
 
-function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, alpha, I, za0, zb0, dt)
+function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, ...
+            alpha, I_chg, I_dch, I_current_cutoff, za0, zb0, dt, f_ocv, Vmin, Vmax)
     % Compute steady-state values
 
-    Q = Qa + Qb;
-    R = Ra + Rb;
+    type = 'simulation';
 
-    kappa = 1/alpha * (Ra*Qa - Rb*Qb) / Q;
+    switch type
+        case 'analytic'
+            Q = Qa + Qb;
+            R = Ra + Rb;
+        
+            kappa = 1/alpha * (Ra*Qa - Rb*Qb) / Q;
+        
+            Issa = 1/R * ((Rb + alpha*kappa))*I_chg(1);
+            Issb = 1/R * ((Ra - alpha*kappa))*I_chg(1);
+            
+            zssa = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (+Qb*kappa - dt) * I_chg(1);
+            zssb = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (-Qa*kappa - dt) * I_chg(1);
 
-    Issa = 1/R * ((Rb + alpha*kappa))*I;
-    Issb = 1/R * ((Ra - alpha*kappa))*I;
-    
-    zssa = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (+Qb*kappa - dt) * I;
-    zssb = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (-Qa*kappa - dt) * I;
+            fprintf('%.3fA, %.3fA, %.3f, %.3f\n', Issa, Issb, zssa, zssb)
 
-    % For future consideration, we can also run a full discrete-time
-    % simulation here:
+        case 'simulation'
+            % Run a discrete-time simulation with a non-linear OCV function
+            out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
+               I_current_cutoff, Qa, Qb, Ra, Rb, za0, zb0, f_ocv, ...
+               Vmin, Vmax);
 
-%         out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
-%                cv_cutoff_current_amps, Qa, Qb, Ra, Rb, za0, zb0, f_ocv, ...
-%                Vmin, Vmax);
+            % Here, 'steady-state' is more like 'final value', since a true
+            % steady-state doesn't exist when the OCV function is changing
+            % all over the place due to the non-linearities in the
+            % function. The 'final value' is the final value at the end of
+            % CC phase only, since this point represents the state at which
+            % the cell is most likely to lithium plate.
 
-%         out = solve_z_dynamics_cccv_complete(t, ...
-%               I_chg, I_dch, I_current_cutoff, alpha, ...
-%               curr.Ra, curr.Rb, curr.Qa, curr.Qb, za0, zb0, ...
-%               f_ocv, Vmin, Vmax);
+            idx_cc = find(out.state == 0);
+            Issa = out.Ia(idx_cc); Issa = Issa(end);
+            Issb = out.Ib(idx_cc); Issb = Issb(end);
+            zssa = out.za(idx_cc); zssa = zssa(end);
+            zssb = out.zb(idx_cc); zssb = zssb(end);
+
+            fprintf('Sim | %.3fA, %.3fA, %.3f, %.3f\n', Issa, Issb, zssa, zssb)
+
+    end
+
+            Q = Qa + Qb;
+            R = Ra + Rb;
+        
+            kappa = 1/alpha * (Ra*Qa - Rb*Qb) / Q;
+        
+            Issa = 1/R * ((Rb + alpha*kappa))*I_chg(1);
+            Issb = 1/R * ((Ra - alpha*kappa))*I_chg(1);
+            
+            zssa = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (+Qb*kappa - dt) * I_chg(1);
+            zssb = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (-Qa*kappa - dt) * I_chg(1);
+
+            fprintf('Ana | %.3fA, %.3fA, %.3f, %.3f\n', Issa, Issb, zssa, zssb)
 
 end
 
