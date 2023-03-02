@@ -25,6 +25,6 @@ function ocv = load_ocv_fn(type)
     data.soc = tbl.t ./ max(tbl.t);
     data.ocv = tbl.V;
 
-    ocv = @(z) interp1(data.soc, data.ocv, z);
+    ocv = @(z) interp1(data.soc, data.ocv, z, 'linear', 'extrap');
 
 end
