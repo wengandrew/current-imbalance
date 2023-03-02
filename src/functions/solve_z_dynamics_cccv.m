@@ -19,7 +19,7 @@ function [tfinal, za, zb, Ia, Ib] = solve_z_dynamics_cccv(tcv, I, alpha, Ra, Rb,
     %
     % Outputs:
     % ---------
-    %   tfinal: output time
+    %   tfinal: output time vector (n elements)
     %   za:     output vector of state of charge for cell A (n elements)
     %   zb:     output vector of state of charge for cell B (n elements)
     %   Ia:     output vector of current for cell A (n elements)
@@ -54,8 +54,14 @@ function [tfinal, za, zb, Ia, Ib] = solve_z_dynamics_cccv(tcv, I, alpha, Ra, Rb,
     Vta = U0 + alpha.*zacc - Iacc*Ra;
     time_at_vmax = interp1(Vta, tcv, Uf);
 
-    if isempty(time_at_vmax)
-        error 'Not enough simulation time given to reach max voltage!'
+    if isnan(time_at_vmax)
+        warning 'Not enough simulation time given to reach max voltage!'
+        za = zacc;
+        zb = zbcc;
+        tfinal = tcv;
+        Ia = Iacc;
+        Ib = Ibcc;
+        return
     end
     
     idx = find(tcv < time_at_vmax);
