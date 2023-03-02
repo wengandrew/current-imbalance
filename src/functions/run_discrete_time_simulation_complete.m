@@ -28,7 +28,7 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
     % --------
     %   out:     a struct holding simulation outputs
     %
-    %   
+    %
     % Assumptions
     % ---------
     %  - fixed time-step simulation
@@ -40,16 +40,18 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
 
     dt = 1;
 
+    verbose = false;
 
     % Initialize arrays and initial conditions. We don't how big the arrays
     % will need to be so we just allocate a little bit to start with. At
     % least we enforce the right dimensions.
-    za = zeros(10, 1); 
-    zb = zeros(10, 1); 
-    Ia = zeros(10, 1); 
-    Ib = zeros(10, 1); 
+    za = zeros(10, 1);
+    zb = zeros(10, 1);
+    Ia = zeros(10, 1);
+    Ib = zeros(10, 1);
     Vt = zeros(10, 1);
     tt = zeros(10, 1);
+    state = zeros(10, 1);
 
     za(1) = za0;
     zb(1) = zb0;
@@ -57,6 +59,7 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
     Ib(1) = (f_ocv(zb0) - f_ocv(za0) + Ra*I_chg(1))/R;
     Vt(1) = f_ocv(za0) - Ia(1)*Ra;
     tt(1) = 0;
+    state(1) = 0; % 0: CC charge, 1: CV charge, 2: CC discharge
 
     % Main loop for CCCV charging
     k = 1;
@@ -64,15 +67,25 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
     t_chg_cc = 0;
 
     while true
-        
-        fprintf('CC Charge Step %g: %.3f V\n', k, Vt(k))
 
+        if verbose
+            fprintf('CC Charge Step %g: %.3f V\n', k, Vt(k))
+        end
+
+        state(k+1) = 0;
         za(k+1) = za(k) - dt/Qa * Ia(k);
         zb(k+1) = zb(k) - dt/Qb * Ib(k);
 
+        if za(k+1) > 1.5
+            keyboard
+        end
+        if zb(k+1) > 1.5
+            keyboard
+        end
+
         Ia(k+1) = (f_ocv(za(k)) - f_ocv(zb(k)) + Rb*I_chg(k)) / R;
         Ib(k+1) = (f_ocv(zb(k)) - f_ocv(za(k)) + Ra*I_chg(k)) / R;
-        
+
         Vt(k+1) = f_ocv(za(k)) - Ia(k)*Ra;
 
         % Check for potentiostatic (CV) mode, in which case update current
@@ -86,16 +99,18 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
             end
             t_chg_cv = dt*k;
 
-            fprintf('CV Charge Step %g: %.3f V\n', k, Vt(k))
+            if verbose
+                fprintf('CV Charge Step %g: %.3f V\n', k, Vt(k))
+            end
 
             % CV charge termination condition
             if abs(I_chg(k)) < abs(cv_cutoff_current_amps)
                 break
             end
 
+            state(k+1) = 1;
             I_chg(k+1) = ( f_ocv(za(k))*Rb + f_ocv(zb(k))*Ra - Vmax*(Ra+Rb) ) / (Ra*Rb);
-        
-    
+
         end
 
         tt(k+1) = dt*k;
@@ -114,11 +129,15 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
             error('Not enough data points provided for the current vector')
         end
 
-        fprintf('CC Discharge Step %g: %.3fV\n', k2, Vt(k2))
+        if verbose
+           fprintf('CC Discharge Step %g: %.3fV\n', k2, Vt(k2))
+        end
+        
+        state(k2+1) = 2;
 
         Ia(k2+1) = (f_ocv(za(k2)) - f_ocv(zb(k2)) + Rb*I_dch(k2 - k + 1)) / R;
         Ib(k2+1) = (f_ocv(zb(k2)) - f_ocv(za(k2)) + Ra*I_dch(k2 - k + 1)) / R;
-        
+
         Vt(k2+1) = f_ocv(za(k2)) - Ia(k2)*Ra;
 
         za(k2+1) = za(k2) - dt/Qa * Ia(k2);
@@ -139,6 +158,7 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
         'NaN found in the terminal voltage. Check the OCV function.')
 
     % Assemble output as a struct
+    out.state = state;
     out.t = tt;
     out.t_chg_cc = t_chg_cc;
     out.t_chg_cv = t_chg_cv;
@@ -147,6 +167,5 @@ function out = run_discrete_time_simulation_complete(I_chg, I_dch, ...
     out.Ia = Ia;
     out.Ib = Ib;
     out.Vt = Vt;
-
 
 end
