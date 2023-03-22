@@ -5,7 +5,7 @@ function parallel_ocv_r_nonlin_map()
 
     clear all; close all; clc
 
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     %% Delta I_ss plot
 
@@ -24,7 +24,7 @@ function parallel_ocv_r_nonlin_map()
     t = 0:dt:simulation_hours*3600; t = t';
     I = -1/3 * (Qa / 3600) * ones(size(t)); % Current
 
-    num_points = 20;
+    num_points = 5;
     r_vec = linspace(0.5, 1.5, num_points + 1);
     q_vec = linspace(0.5, 1.5, num_points);
     di_ss = zeros(numel(r_vec), numel(q_vec));

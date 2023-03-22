@@ -1,7 +1,7 @@
 function test_lifetime_sei_growth_models()
     % Demonstrate a few SEI growth models
 
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
     % Smith2011
 
     k = 1e-3;

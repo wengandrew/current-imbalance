@@ -10,7 +10,7 @@ function fig_degradation_convergence()
 
 
     % Initialize the system
-    p = initialize_cell_props();
+    p = initialize_cell_props_dsmc();
 
     [cyc_num_vec1, p1] = simulate(p, 0.5, 4);
     [cyc_num_vec2, p2] = simulate(p, 1.0, 0.002);
@@ -24,7 +24,7 @@ function fig_degradation_convergence()
     th.TileIndexing = 'columnmajor';
 
     % Capacity loss
-    ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]); 
+    ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]);
     line(cyc_num_vec1, (p1.Qa - p1.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
         'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
     line(cyc_num_vec1, (p1.Qa - p1.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
@@ -51,7 +51,7 @@ function fig_degradation_convergence()
     lh = legend('show'); set(lh, 'Location', 'SouthEast');
 
     % Capacity loss
-    ax3 = nexttile(th, 3); box on; set(ax3,'XTickLabel',[]); 
+    ax3 = nexttile(th, 3); box on; set(ax3,'XTickLabel',[]);
     line(cyc_num_vec2, (p2.Qa - p2.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
         'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
     line(cyc_num_vec2, (p2.Qa - p2.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
@@ -78,7 +78,7 @@ function fig_degradation_convergence()
     lh = legend('show'); set(lh, 'Location', 'SouthEast');
 
     % Capacity loss
-    ax5 = nexttile(th, 5); box on; set(ax5,'XTickLabel',[]); 
+    ax5 = nexttile(th, 5); box on; set(ax5,'XTickLabel',[]);
     line(cyc_num_vec3, (p3.Qa - p3.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
         'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
     line(cyc_num_vec3, (p3.Qa - p3.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
@@ -112,7 +112,7 @@ function fig_degradation_convergence()
 %     xlabel('Cycle Number', 'Interpreter', 'Latex')
 %     ylabel('$I_{ss}$ (A)', 'Interpreter', 'Latex')
 %     lh = legend('show');
-% 
+%
 %     subplot(224)
 %     line(cyc_num_vec, zssa_vec, 'Color', 'r', 'Marker', 'o', ...
 %         'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
@@ -297,15 +297,15 @@ function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, ...
 
 %             Q = Qa + Qb;
 %             R = Ra + Rb;
-% 
+%
 %             kappa = 1/alpha * (Ra*Qa - Rb*Qb) / Q;
-% 
+%
 %             Issa = 1/R * ((Rb + alpha*kappa))*I_chg(1);
 %             Issb = 1/R * ((Ra - alpha*kappa))*I_chg(1);
-% 
+%
 %             zssa = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (+Qb*kappa - dt) * I_chg(1);
 %             zssb = 1/Q * (Qa*za0 + Qb*zb0) + 1/Q * (-Qa*kappa - dt) * I_chg(1);
-% 
+%
 %             fprintf('Ana | %.3fA, %.3fA, %.3f, %.3f\n', Issa, Issb, zssa, zssb)
 
 end

@@ -56,7 +56,7 @@ function parallel_ocv_r_nonlin_comparison()
     Vtt(nmcpw.idx) = [];
 
     % Visualize
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     fh = figure('Position', [500 100 800*1.5 500*1.5]);
     th = tiledlayout(2, 3, 'Padding', 'none', 'TileSpacing', 'tight'); 
@@ -151,8 +151,6 @@ function parallel_ocv_r_nonlin_comparison()
 
     lh = legend(ax_dz, 'show'); set(lh, 'Location', 'NorthEast')
     legend(ax_dz, 'LinPiecewise', 'Analytic', 'NMC')
-
-    saveas(fh, 'figures/fig_nonlinear_study.png')
 
     keyboard
 

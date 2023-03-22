@@ -5,7 +5,7 @@ function parallel_ocv_r_simulations_v1()
     % Paper on parallel cell dynamics
 
     clear all; close all; clc
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     % Initialize model parameters
     Ra = 0.05; % ohms
@@ -56,13 +56,13 @@ function plot_tau_sensitivity(Qa, Ra, alpha)
     ylabel('$r$ = $R_a/R_b$', 'Interpreter', 'Latex')
     xlabel('$q$ = $Q_a/Q_b$', 'Interpreter', 'Latex')
     title('$\tau$ (hrs)', 'Interpreter', 'Latex')
-    saveas(fh, 'figures/fig_time_constant.png')
+%     saveas(fh, 'figures/fig_time_constant.png')
 
 end
 
 function plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
 
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     rr = linspace(0.5, 1.5, 101);
     qq = linspace(0.5, 1.5, 100);
@@ -145,13 +145,13 @@ function plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
     title('$\Delta z_{ss} = z_{ss,a} - z_{ss,b}$', 'Interpreter', 'Latex')
     box on;
 
-    saveas(fh, 'figures/fig_dz_ss_sensitivity.png')
+%     saveas(fh, 'figures/fig_dz_ss_sensitivity.png')
 
 end
 
 function plot_di_ss_sensitivity(Qa, Ra, current_target)
 
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     rr = linspace(0.5, 1.5, 101);
     qq = linspace(0.5, 1.5, 100);
@@ -228,7 +228,7 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
     title('$\Delta I_{ss} = I_{ss,a} - I_{ss,b}$ (A)', 'Interpreter', 'Latex')
     box on;
 
-    saveas(fh, 'figures/fig_di_ss_sensitivity.png')
+%     saveas(fh, 'figures/fig_di_ss_sensitivity.png')
 
 end
 
@@ -313,7 +313,7 @@ function plot_z_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
     legend(ax1, 'show', 'Location', 'NorthEast', 'Interpreter', 'Latex')
     legend(ax2, {'$z_a$', '$z_b$'}, 'Location', 'NorthWest', 'Interpreter', 'Latex')
 
-    saveas(fh, sprintf('figures/fig_z_dynamics_timeseries.png'))
+%     saveas(fh, sprintf('figures/fig_z_dynamics_timeseries.png'))
 
 end
 
@@ -386,6 +386,6 @@ function plot_i_timeseries(t, I, alpha, Ra, Qa, za0, zb0, U0)
     legend(ax1, 'show', 'Location', 'NorthEast', 'Interpreter', 'Latex')
     legend(ax2, {'$I_a$', '$I_b$'}, 'Location', 'NorthEast', 'Interpreter', 'Latex')
 
-    saveas(fh, sprintf('figures/fig_i_dynamics_timeseries.png'))
+%     saveas(fh, sprintf('figures/fig_i_dynamics_timeseries.png'))
 
 end

@@ -11,6 +11,10 @@ function test_lifetime_simulation_with_imbalance()
     % Initialize the system
     p = initialize_cell_props();
 
+
+    % SEI parameters
+    n = 1.2;
+
     % Define end condition
     dQa_vec = 0;
     dQb_vec = 0;
@@ -78,11 +82,11 @@ function test_lifetime_simulation_with_imbalance()
             I_chg, I_dch, I_current_cutoff, za0, zb0, delta_time, ...
             f_ocv, Vmin, Vmax);
         
-        curra = update_states_iss(preva, delta_time, Issa);
-        currb = update_states_iss(prevb, delta_time, Issb);
+        curra = update_states_iss(preva, delta_time, Issa, n);
+        currb = update_states_iss(prevb, delta_time, Issb, n);
 
-        curra_control = update_states_iss(preva_control, delta_time, I_chg(1)/2);
-        currb_control = update_states_iss(prevb_control, delta_time, I_chg(1)/2);
+        curra_control = update_states_iss(preva_control, delta_time, I_chg(1)/2, n);
+        currb_control = update_states_iss(prevb_control, delta_time, I_chg(1)/2, n);
 
         dQa_vec = [dQa_vec ; curra.dQ];
         dQb_vec = [dQb_vec ; currb.dQ];
@@ -116,7 +120,7 @@ function test_lifetime_simulation_with_imbalance()
 
     end
 
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     figure('Position', [10 10 700 600].*1.5);
     subplot(221)
@@ -225,10 +229,9 @@ function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, ...
 
 end
 
-function curr = update_states_simple(prev, delta_time)
+function curr = update_states_simple(prev, delta_time, n)
     % Simple form of the Q-R state update equation based on a constant
     % reaction rate constant k
-    n = 0.5;
 
     k = 1;
 
@@ -241,7 +244,7 @@ function curr = update_states_simple(prev, delta_time)
 
 end
 
-function curr = update_states_iss(prev, delta_time, Iss)
+function curr = update_states_iss(prev, delta_time, Iss, n)
     % Q-R state update function based on steady-state current imbalance
     % values
     %
@@ -259,13 +262,11 @@ function curr = update_states_iss(prev, delta_time, Iss)
     % curr
     %    updated state
 
-    n = 0.5;
-    
     % Update rate constants for capacities and resistances
-    gamma_q = 8;
+    gamma_q = 8e-3;
     kq = gamma_q*abs(Iss);
 
-    gamma_r = 0.00001;
+    gamma_r = 0.00001e-3;
     kr = gamma_r*abs(Iss);
 
     % Discrete state update equation for SEI growth

@@ -9,7 +9,7 @@ function aw20221221_imbalance_bound_simulations(analysis_type, q, r, current_tar
 
     to_plot = true;
 
-    set_default_plot_settings_manuscript()
+    set_default_plot_settings()
 
     switch analysis_type
         case 'lfp'
@@ -129,35 +129,39 @@ function aw20221221_imbalance_bound_simulations(analysis_type, q, r, current_tar
 
         figure('OuterPosition', [0, 0, 900, 1200])
 
-        ax3 = subplot(411);
+        ax3 = subplot(511);
         line(tfinal./3600, za, 'Color', 'b', 'DisplayName', 'Analytic')
         line(tfinal./3600, zb, 'Color', 'r', 'DisplayName', 'Analytic')
         line(out.t./3600, out.za, 'Color', 'b', 'LineStyle', ':', 'DisplayName', 'Simulated')
         line(out.t./3600, out.zb, 'Color', 'r', 'LineStyle', ':', 'DisplayName', 'Simulated')
-        xlabel('Time (hrs)')
         ylabel('$z$', 'Interpreter', 'Latex')
-        legend show
+        legend showline
 
-        ax4 = subplot(412);
+        ax4 = subplot(512);
         line(tfinal./3600, abs(za - zb), 'Color', 'r', 'DisplayName', 'Analytic')
         yline(abs(kappa * current_target), 'DisplayName', 'Bound ($\kappa I$)', 'LineStyle', '--', 'Color', 'r')
         line(out.t./3600, abs(out.za - out.zb), 'Color', 'b', 'DisplayName', 'Simulated')
         yline(Linfbound_RHS, 'DisplayName', 'Bound ($-\frac{B}{Ak_1}\max(|I|) + |\tilde{z}_0|$)', 'LineStyle', '--', 'Color', 'b')
-
-        xlabel('Time (hrs)')
         ylabel('$|\Delta z|$', 'Interpreter', 'Latex')
         legend show
     
-        ax5 = subplot(413);
+        ax5 = subplot(513);
         line(tfinal./3600, Ia, 'Color', 'b', 'DisplayName', 'Analytic')
         line(tfinal./3600, Ib, 'Color', 'r', 'DisplayName', 'Analytic')
         line(out.t./3600, out.Ia, 'Color', 'b', 'LineStyle', ':', 'DisplayName', 'Simulated')
         line(out.t./3600, out.Ib, 'Color', 'r', 'LineStyle', ':', 'DisplayName', 'Simulated')
-        xlabel('Time (hrs)')
         ylabel('Current (A)')
         legend show
+
+        ax5 = subplot(514);
+        line(tfinal./3600, abs(Ia-Ib), 'Color', 'r', 'DisplayName', 'Analytic')
+        yline(abs((Qa-Qb)/(Qa+Qb)*current_target), 'Color', 'r', 'LineStyle', ':', 'DisplayName', 'Bound ($\frac{Q_a-Q_b}{Q_a+Q_b}I$)')
+        line(out.t./3600, out.Ia - out.Ib, 'Color', 'b', 'DisplayName', 'Simulated')
+        yline(abs( (2*k2*Linfbound_RHS + (Ra - Rb)*Linfcondition_RHS) / (Ra+Rb) ), 'Color', 'b', 'LineStyle', ':', 'DisplayName', 'Bound')
+        ylabel('$|\Delta I|$ (A)', 'Interpreter', 'Latex')
+        legend show
     
-        ax6 = subplot(414);
+        ax6 = subplot(515);
         line(tfinal/3600, U0 + alpha*za - Ia*Ra, 'Color', 'k', 'DisplayName', 'Analytic')
         line(out.t./3600, out.Vt, 'Color', 'k', 'LineStyle', ':', 'DisplayName', 'Simulated')
         line(out.t./3600, ocv(out.za), 'Color', 'b', 'LineStyle', '--', 'DisplayName', 'Simulated')
