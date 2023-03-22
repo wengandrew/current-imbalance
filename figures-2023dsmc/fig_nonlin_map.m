@@ -4,12 +4,14 @@ function fig_nonlin_map()
     set_default_plot_settings()
 
     % Configure the simulation
-    analysis_type = 'nmc';
+    analysis_type = 'lfp';
     to_plot_detailed = true;
 
     % Initial conditions
     za0 = 0.0;
     zb0 = 0.0;
+
+    xvar = 'z';
 
     switch analysis_type
         case 'nmc'
@@ -55,6 +57,8 @@ function fig_nonlin_map()
     % Loop over the parameter space
     for i = 1:numel(r_vec)
         for j = 1:numel(q_vec)
+
+            tic
             
             fprintf('Running (r,q) = (%.2f, %.2f)...\n', r_vec(i), q_vec(j))
             
@@ -95,18 +99,31 @@ function fig_nonlin_map()
                 tile_count = tile_count + 1;
 
                 ax = nexttile(th, tile_count); box on; 
-                line(res.t/3600, res.Ia, 'Color', 'r', 'LineWidth', 2, 'DisplayName', '$I_a$')
-                line(res.t/3600, res.Ib, 'Color', 'b', 'LineWidth', 2, 'LineStyle', ':', 'DisplayName', '$I_b$')
+
+                if strcmpi(xvar, 'z')
+                    xa = res.za; xb = res.zb;
+                    legend_string = {'$z_a$', '$z_b$'};
+                    label_string = '$z$';
+                elseif strcmpi(xvar, 'i')
+                    xa = res.Ia; xb = res.Ib;
+                    legend_string = {'$I_a$', '$I_b$'};
+                    label_string = '$I$(A)';
+                end
+
+                line(res.t/3600, xa, 'Color', 'r', 'LineWidth', 2, 'DisplayName', '$I_a$')
+                line(res.t/3600, xb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', ':', 'DisplayName', '$I_b$')
     
                 axes = [axes ; ax];
                 
-                if i == 1 && j == 1 ; legend('$I_a$', '$I_b$') ; end
+                if i == 1 && j == 1 ; legend(legend_string) ; end
                 if j == numel(q_vec) ; set(ax, 'YTickLabel', []) ; end
                 if i == numel(r_vec) ; xlabel(sprintf('q=%.2g/$t$ (hrs)', q_vec(j)), 'Interpreter', 'Latex')
                     else; set(ax, 'XTickLabel', []) ; end
-                if j == 1; ylabel(sprintf('r=%.2g/$I$ (A)', r_vec(i)), 'Interpreter', 'Latex')
+                if j == 1; ylabel(sprintf('r=%.2g/%s', r_vec(i), label_string), 'Interpreter', 'Latex')
                     else; set(ax, 'YTickLabel', []) ; end
             end
+
+            toc
 
         end
 
