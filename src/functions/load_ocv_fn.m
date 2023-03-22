@@ -3,7 +3,7 @@ function ocv = load_ocv_fn(type)
     % 
     % Parameters
     % ---------
-    %   type: 'lfp' or 'nmc'
+    %   type: 'lfp' or 'nmc' or 'nmc-umbl2022feb'
     %
     % Outputs
     % ---------
@@ -14,6 +14,8 @@ function ocv = load_ocv_fn(type)
             filepath = 'data/ocv_Prada2013.csv';
         case 'nmc'
             filepath = 'data/ocv_Chen2020.csv';
+        case 'nmc-umbl2022feb'
+            filepath = 'data/20230303_c20_charge.csv';
         otherwise
             error('Type "%s" not supported.', type)
     end
@@ -25,6 +27,6 @@ function ocv = load_ocv_fn(type)
     data.soc = tbl.t ./ max(tbl.t);
     data.ocv = tbl.V;
 
-    ocv = @(z) interp1(data.soc, data.ocv, z, 'linear', 'extrap');
+    ocv = griddedInterpolant(data.soc, data.ocv, 'linear', 'nearest');
 
 end
