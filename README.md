@@ -3,7 +3,7 @@ Current imbalance dynamics in parallel-connected cells.
 
 May 14, 2022
 
-MATLAB 2021b was used to generate the code and run the simulations. To run, set the path to the root. Do not run from `src` since the code assumes you are starting from one level up from `src.)
+MATLAB 2021b was used to generate the code and run the simulations. To run, set the path to the root. Add all subfolders to your path. Do not run from `src` since the code assumes you are starting from one level up from `src.)
 
 ## Next steps
 
