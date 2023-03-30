@@ -148,40 +148,43 @@ function out = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vlim)
 end
 
 
-function out = solve_cv(t, Ra, Rb, Qa, Qb, alpha, za0, zb0, Vmin, Vmax, I_current_cutoff)
+function out = solve_cv(t, R2, R1, Q2, Q1, alpha, z20, z10, Vmin, Vmax, I_current_cutoff)
     % Solver for the constant voltage case
 
     Z_SOLUTION_METHOD = 'analytic';
 
     dU = Vmax - Vmin;
     u = ones(size(t)) * dU;
-    
+
+    Q = Q1 + Q2;
+    kappa = (R2*Q2-R1*Q1)/(Q1+Q2)/alpha;
+    tau = (R1+R2)/alpha*(Q1*Q2)/(Q1+Q2);
     switch Z_SOLUTION_METHOD
 
         case 'lsim'
 
-            [A, B, C, D] = build_state_matrices_cv_mode(Ra, Rb, Qa, Qb, alpha);
+            [A, B, C, D] = build_state_matrices_cv_mode(R2, R1, Q2, Q1, alpha);
             sys = ss(A, B, C, D);
-            sim_out = lsim(sys, u, t, [za0 ; zb0]);
+            sim_out = lsim(sys, u, t, [z20 ; z10]);
             
             za = sim_out(:, 1);
             zb = sim_out(:, 2);
 
         case 'analytic'
 
-            taua = Qa*Ra/alpha;
-            taub = Qb*Rb/alpha;
+            taua = Q2*R2/alpha;
+            taub = Q1*R1/alpha;
         
-            za = za0 * exp(-t./taua) - (1/alpha) * (exp(-t./taua) - 1) .* dU;
-            zb = zb0 * exp(-t./taub) - (1/alpha) * (exp(-t./taub) - 1) .* dU;
+            za = z20 * exp(-t./taua) - (1/alpha) * (exp(-t./taua) - 1) .* dU;
+            zb = z10 * exp(-t./taub) - (1/alpha) * (exp(-t./taub) - 1) .* dU;
 
     end
 
-    Ia1 = alpha*za / Ra;
-    Ia2 = -u / Ra;
+    Ia1 = alpha*za / R2;
+    Ia2 = -u / R2;
 
-    Ib1 = alpha*zb / Rb;
-    Ib2 = -u / Rb;
+    Ib1 = alpha*zb / R1;
+    Ib2 = -u / R1;
 
     Ia = Ia1 + Ia2;
     Ib = Ib1 + Ib2;
@@ -192,16 +195,16 @@ function out = solve_cv(t, Ra, Rb, Qa, Qb, alpha, za0, zb0, Vmin, Vmax, I_curren
     out.Vt = Vt;
     out.za = za;
     out.zb = zb;
-    out.za_ohmic = nan*ones(size(t));
-    out.za_rebal = nan*ones(size(t));
-    out.zb_ohmic = nan*ones(size(t));
-    out.zb_rebal = nan*ones(size(t));
+    out.za_ohmic = 1/Q * ( +Q1*kappa*(1-exp(-t./tau)) - t) .* (Ia + Ib);
+    out.za_rebal = 1/Q * ( (Q2 + Q1*exp(-t./tau))*z20 + Q1*(1-exp(-t./tau))*z10 );
+    out.zb_ohmic = 1/Q * ( -Q2*kappa*(1-exp(-t./tau)) - t) .* (Ia + Ib);
+    out.zb_rebal = 1/Q * ( (Q2*(1-exp(-t./tau)))*z20 + (Q1 + Q2*exp(-t./tau))*z10 );
     out.Ia = Ia;
     out.Ib = Ib;
-    out.Ia_ohmic = nan*ones(size(t));
-    out.Ia_rebal = nan*ones(size(t));
-    out.Ib_ohmic = nan*ones(size(t));
-    out.Ib_rebal = nan*ones(size(t));
+    out.Ia_ohmic = R1/(R1+R2) * (Ia+Ib);
+    out.Ia_rebal = Ia - out.Ia_ohmic;
+    out.Ib_ohmic = R2/(R1+R2) * (Ia+Ib);
+    out.Ib_rebal = Ib - out.Ib_ohmic;
 
     out = struct2table(out);
 

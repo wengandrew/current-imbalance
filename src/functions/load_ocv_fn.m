@@ -3,12 +3,24 @@ function ocv = load_ocv_fn(type)
     % 
     % Parameters
     % ---------
-    %   type: 'lfp' or 'nmc' or 'nmc-umbl2022feb'
+    %   type: 'lfp', 'lfp-affine', 
+    %         'nmc', 'nmc-affine'
     %
     % Outputs
     % ---------
     %   ocv: an anonymous function OCV = f(z)
 
+    % Deal with the requests for the affine functions first
+    switch type
+        case 'lfp-affine'
+            ocv = @(z) 0.6.*z + 3.0;
+            return
+        case 'nmc-affine'
+            ocv = @(z) 0.89.*z + 3.31;
+            return
+    end
+
+    
     switch type
         case 'lfp'
             filepath = 'data/ocv_Prada2013.csv';
