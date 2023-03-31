@@ -8,8 +8,8 @@ function fig_nonlinear_dynamics_nmc()
     % Initialize model parameters
     Ra  = 0.15; % ohms
     Qa  = 3.00 * 3600; % As
-    za0 = 0.20;
-    zb0 = 0.30;
+    za0 = 0.40;
+    zb0 = 0.20;
     q   = 0.7;
     r   = 1.1;
 
@@ -58,12 +58,12 @@ function fig_nonlinear_dynamics_nmc()
     res_disc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);
 
-    plot_results_default(res_lsim, res_disc, ocv_lin, max_hours)
+    plot_results_default(res_lsim, res_disc, ocv_lin, ocv_nonlin, max_hours)
     plot_results_imbalance(res_lsim, res_disc, max_hours)
 
 end
 
-function plot_results_default(resa, resb, ocv_lin, max_hours)
+function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours)
 
     % Define time offsets so that the affine and the non-linear simulations
     % will share common points at the start and end of the CV hold phase.
@@ -86,8 +86,8 @@ function plot_results_default(resa, resb, ocv_lin, max_hours)
     line(resa.t./3600 - (t0-t3)/3600, resa.Ib, 'Color', 'b', 'LineStyle', '--', 'DisplayName', '$I_1$ (affine)', 'LineWidth', 2)
     line(resa.t./3600 - (t0-t3)/3600, resa.Ia, 'Color', 'r', 'LineStyle', '--', 'DisplayName', '$I_2$ (affine)', 'LineWidth', 2)
 
-    line(resb.t(idxa)./3600, resb.Ib(idxa), 'Color', 'b', 'DisplayName', '$I_1$ (non-linear)', 'LineWidth', 2)
-    line(resb.t(idxa)./3600, resb.Ia(idxa), 'Color', 'r', 'DisplayName', '$I_2$ (non-linear)', 'LineWidth', 2)
+    line(resb.t(idxa)./3600, resb.Ib(idxa), 'Color', 'b', 'DisplayName', '$I_1$ (NMC/Gr)', 'LineWidth', 2)
+    line(resb.t(idxa)./3600, resb.Ia(idxa), 'Color', 'r', 'DisplayName', '$I_2$ (NMC/Gr)', 'LineWidth', 2)
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Ib(idxb), 'Color', 'b', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Ia(idxb), 'Color', 'r', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
 
@@ -105,8 +105,8 @@ function plot_results_default(resa, resb, ocv_lin, max_hours)
     line(resa.t./3600 - (t0-t3)/3600, resa.za, 'Color', 'r', 'LineStyle', '--', 'DisplayName', '$z_2$ (affine)', 'LineWidth', 2)
 
 
-    line(resb.t(idxa)./3600, resb.zb(idxa), 'Color', 'b', 'DisplayName', '$z_1$ (non-linear)', 'LineWidth', 2)
-    line(resb.t(idxa)./3600, resb.za(idxa), 'Color', 'r', 'DisplayName', '$z_2$ (non-linear)', 'LineWidth', 2)
+    line(resb.t(idxa)./3600, resb.zb(idxa), 'Color', 'b', 'DisplayName', '$z_1$ (NMC/Gr)', 'LineWidth', 2)
+    line(resb.t(idxa)./3600, resb.za(idxa), 'Color', 'r', 'DisplayName', '$z_2$ (NMC/Gr)', 'LineWidth', 2)
 
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.za(idxb), 'Color', 'r', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.zb(idxb), 'Color', 'b', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
@@ -124,9 +124,9 @@ function plot_results_default(resa, resb, ocv_lin, max_hours)
     line(resa.t./3600 - (t0-t3)/3600, resa.Vt, 'LineStyle', '--', 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$V_t$ (affine)')
     line(resa.t./3600 - (t0-t3)/3600, ocv_lin(resa.zb), 'LineStyle', '--', 'LineWidth', 2, 'Color', 'b', 'DisplayName', '$U_1$ (affine)')
     line(resa.t./3600 - (t0-t3)/3600, ocv_lin(resa.za), 'LineStyle', '--', 'LineWidth', 2, 'Color', 'r', 'DisplayName', '$U_2$ (affine)')
-    line(resb.t(idxa)./3600, resb.Vt(idxa), 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$V_t$ (non-linear)')
-    line(resb.t(idxa)./3600, ocv_lin(resb.zb(idxa)), 'LineWidth', 2, 'Color', 'b', 'DisplayName', '$U_1$ (non-linear)')
-    line(resb.t(idxa)./3600, ocv_lin(resb.za(idxa)), 'LineWidth', 2, 'Color', 'r', 'DisplayName', '$U_2$ (non-linear)')
+    line(resb.t(idxa)./3600, resb.Vt(idxa), 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$V_t$ (NMC/Gr)')
+    line(resb.t(idxa)./3600, ocv_nonlin(resb.zb(idxa)), 'LineWidth', 2, 'Color', 'b', 'DisplayName', '$U_1$ (NMC/Gr)')
+    line(resb.t(idxa)./3600, ocv_nonlin(resb.za(idxa)), 'LineWidth', 2, 'Color', 'r', 'DisplayName', '$U_2$ (NMC/Gr)')
 
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Vt(idxb), 'Color', 'k', 'LineWidth', 2, 'HandleVisibility', 'off')
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, ocv_lin(resb.za(idxb)), 'LineWidth', 2, 'Color', 'r', 'HandleVisibility', 'off')
@@ -160,35 +160,35 @@ function plot_results_imbalance(resa, resb, max_hours)
     idxa = resb.t < t2;
     idxb = resb.t >= t2;
 
+    % Current plot
+    ax1 = nexttile(th, 1); box on; %ylim([-1.5 1.2])
+    xlabel(ax1, '$t$ (hrs)', 'Interpreter', 'Latex')
+    ylabel(ax1, '$\Delta I$ (A)', 'Interpreter', 'Latex')
+
+    line(resa.t./3600 - (t0-t3)/3600, resa.Ia - resa.Ib, 'LineStyle', '--', 'LineWidth', 2, 'Color', 'k', 'DisplayName', '$\Delta I$ (affine)')
+    line(resb.t(idxa)./3600, resb.Ia(idxa) - resb.Ib(idxa), 'LineWidth', 2, 'Color', 'k', 'DisplayName', '$\Delta I$ (non-linear)')
+    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Ia(idxb) - resb.Ib(idxb), 'LineWidth', 2, 'Color', 'k', 'HandleVisibility', 'off')
+
+    xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
+    xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
+    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
+    lh = legend('show', 'Location', 'best');
+%     ylim([-0.4 +0.4])
+
+
     % SOC plot
-    ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]);
+    ax2 = nexttile(th, 2); box on; set(ax2,'XTickLabel',[]);
     ylabel('$\Delta z$', 'Interpreter', 'Latex')
 
     line(resa.t./3600 - (t0-t3)/3600, resa.za - resa.zb, 'LineStyle', '--', 'LineWidth', 2, 'Color', 'k', 'DisplayName', '$\Delta z$ (affine)')
     line(resb.t(idxa)./3600, resb.za(idxa) - resb.zb(idxa), 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$\Delta z$ (non-linear)')
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.za(idxb) - resb.zb(idxb), 'Color', 'k', 'LineWidth', 2, 'HandleVisibility', 'off')
 
-    xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-
-    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    lh = legend('Show', 'Location', 'Best');
-%     ylim([-0.02 0.02])
-
-    % Current plot
-    ax2 = nexttile(th, 2); box on; %ylim([-1.5 1.2])
-    xlabel(ax2, '$t$ (hrs)', 'Interpreter', 'Latex')
-    ylabel(ax2, '$\Delta I$ (A)', 'Interpreter', 'Latex')
-
-    line(resa.t./3600 - (t0-t3)/3600, resa.Ia - resa.Ib, 'LineStyle', '--', 'LineWidth', 2, 'Color', 'k', 'DisplayName', '$\Delta I$ (affine)')
-    line(resb.t(idxa)./3600, resb.Ia(idxa) - resb.Ib(idxa), 'LineWidth', 2, 'Color', 'k', 'DisplayName', '$\Delta I$ (non-linear)')
-    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Ia(idxb) - resb.Ib(idxb), 'LineWidth', 2, 'Color', 'k', 'HandleVisibility', 'off')
-
     xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    lh = legend('show', 'Location', 'best');
-%     ylim([-0.4 +0.4])
+    lh = legend('Show', 'Location', 'Best');
+%     ylim([-0.02 0.02])
 
     linkaxes([ax1, ax2], 'x')
     xlim([0 max_hours])

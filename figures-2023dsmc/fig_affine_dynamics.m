@@ -50,13 +50,18 @@ function fig_affine_dynamics()
     % Plot limit cycles in the z_a, z_b diagram
     fh = figure('Position', [500 100 500 500]); box on; grid off;
 
-%     subplot(1, 2, 1); box on; grid off
     line(linspace(0, 1, 100), linspace(0, 1, 100), 'LineStyle', '--', 'Color', [0.5, 0.5, 0.5], 'DisplayName', '$z_1=z_2$')
     line(res_lsim.zb(1), res_lsim.za(1), 'Marker', 'x', 'MarkerSize', 18, 'LineStyle', 'none', 'LineWidth', 2, 'Color', 'k', 'DisplayName', 'I.C.')
     line(res_lsim.zb, res_lsim.za, 'LineStyle', '-', 'LineWidth', 3, 'Color', 'k', 'DisplayName', '1st Cycle') 
     line(res_lsim2.zb, res_lsim2.za, 'LineStyle', '--', 'LineWidth', 3, 'Color', 'r', 'DisplayName', '2nd Cycle') 
     line(res_lsim3.zb, res_lsim3.za, 'LineStyle', ':', 'LineWidth', 2, 'Color', 'b', 'DisplayName', '3rd Cycle') 
-%     rectangle('Position',[0.85 0.85 0.15 0.15],'Curvature',0.0)
+
+%     line(Qb.*linspace(0, 1, 100), Qa.*linspace(0, 1, 100), 'LineStyle', '--', 'Color', [0.5, 0.5, 0.5], 'DisplayName', '$z_1=z_2$')
+%     line(Qb.*res_lsim.zb(1), Qa.*res_lsim.za(1), 'Marker', 'x', 'MarkerSize', 18, 'LineStyle', 'none', 'LineWidth', 2, 'Color', 'k', 'DisplayName', 'I.C.')
+%     line(Qb.*res_lsim.zb, Qa.*res_lsim.za, 'LineStyle', '-', 'LineWidth', 3, 'Color', 'k', 'DisplayName', '1st Cycle') 
+%     line(Qb.*res_lsim2.zb, Qa.*res_lsim2.za, 'LineStyle', '--', 'LineWidth', 3, 'Color', 'r', 'DisplayName', '2nd Cycle') 
+%     line(Qb.*res_lsim3.zb, Qa.*res_lsim3.za, 'LineStyle', ':', 'LineWidth', 2, 'Color', 'b', 'DisplayName', '3rd Cycle') 
+
 
     legend show
     ZLIMS = [min([min(res_lsim.za) min(res_lsim.zb)]) - 0.03 1];
@@ -65,16 +70,33 @@ function fig_affine_dynamics()
     xlabel('$z_1$', 'Interpreter', 'latex')
     ylabel('$z_2$', 'Interpreter', 'latex')
 
-%     subplot(1, 2, 2); box on; grid off;
-%     line(linspace(0, 1, 100), linspace(0, 1, 100), 'LineStyle', '--', 'Color', [0.5, 0.5, 0.5], 'DisplayName', '$z_1=z_2$')
-%     line(res_lsim.zb(1), res_lsim.za(1), 'Marker', 'x', 'MarkerSize', 18, 'LineStyle', 'none', 'LineWidth', 2, 'Color', 'k', 'DisplayName', 'I.C.')
-%     line(res_lsim.zb, res_lsim.za, 'LineStyle', '-', 'LineWidth', 3, 'Color', 'k', 'DisplayName', '1st Cycle') 
-%     line(res_lsim2.zb, res_lsim2.za, 'LineStyle', '--', 'LineWidth', 3, 'Color', 'r', 'DisplayName', '2nd Cycle') 
-%     line(res_lsim3.zb, res_lsim3.za, 'LineStyle', ':', 'LineWidth', 2, 'Color', 'b', 'DisplayName', '3rd Cycle') 
-%     xlim([0.85 1])
-%     ylim([0.85 1])
-%     xlabel('$z_1$', 'Interpreter', 'latex')
-%     ylabel('$z_2$', 'Interpreter', 'latex')
+
+
+    % Plot limit cycles in the z_a, z_b diagram
+%     fh = figure('Position', [500 100 500 500]); box on; grid off;
+% 
+%     line(linspace(-2, 2, 100), linspace(-2, 2, 100), 'LineStyle', '--', 'Color', [0.5, 0.5, 0.5], 'DisplayName', '$I_1=I_2$')
+%     line(res_lsim.Ib(1), res_lsim.Ia(1), 'Marker', 'x', 'MarkerSize', 18, 'LineStyle', 'none', 'LineWidth', 2, 'Color', 'k', 'DisplayName', 'I.C.')
+%     line(res_lsim.Ib, res_lsim.Ia, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 3, 'LineWidth', 3, 'Color', 'k', 'DisplayName', '1st Cycle') 
+%     line(res_lsim2.Ib, res_lsim2.Ia, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 3, 'LineWidth', 3, 'Color', 'r', 'DisplayName', '2nd Cycle') 
+%     line(res_lsim3.Ib, res_lsim3.Ia, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 3, 'LineWidth', 2, 'Color', 'b', 'DisplayName', '3rd Cycle') 
+% 
+%     legend show
+% %     ZLIMS = [min([min(res_lsim.za) min(res_lsim.zb)]) - 0.03 1];
+% %     xlim(ZLIMS)
+% %     ylim(ZLIMS)
+%     xlabel('$I_1$', 'Interpreter', 'latex')
+%     ylabel('$I_2$', 'Interpreter', 'latex')
+% 
+    % Plot limit cycles in the z_a, z_b diagram
+    fh = figure('Position', [500 100 500 500]); box on; grid off;
+    line(res_lsim.Ia(1) - res_lsim.Ib(1), res_lsim.za(1) - res_lsim.zb(1), 'Marker', 'x', 'MarkerSize', 18, 'LineStyle', 'none', 'LineWidth', 2, 'Color', 'k', 'DisplayName', 'I.C.')
+    line(res_lsim.Ia - res_lsim.Ib, res_lsim.za - res_lsim.zb, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 3, 'LineWidth', 3, 'Color', 'k', 'DisplayName', '1st Cycle') 
+    line(res_lsim2.Ia - res_lsim2.Ib, res_lsim2.za - res_lsim2.zb, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 3, 'LineWidth', 3, 'Color', 'r', 'DisplayName', '2nd Cycle') 
+    line(res_lsim3.Ia - res_lsim3.Ib, res_lsim3.za - res_lsim3.zb, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 3, 'LineWidth', 2, 'Color', 'b', 'DisplayName', '3rd Cycle') 
+    xlabel('$\Delta I$', 'Interpreter', 'latex')
+    ylabel('$\Delta z$', 'Interpreter', 'latex')
+
 
 end
 
