@@ -13,9 +13,9 @@ function fig_ocv_functions()
 
     xx = linspace(0, 1, 1000);
 
-    line(xx, nmc_affine(xx), 'LineWidth', 2, 'LineStyle', '--', 'Color', 'b', 'DisplayName', 'Affine')
-    line(xx, nmc(xx), 'LineWidth', 2, 'LineStyle', '-', 'Color', 'b', 'DisplayName', 'NMC/Gr')
-    line(xx, lfp(xx), 'LineWidth', 2, 'LineStyle', '-', 'Color', 'r', 'DisplayName', 'LFP/Gr')
+    line(xx, nmc_affine(xx), 'LineWidth', 2, 'LineStyle', '--', 'Color', 'k', 'DisplayName', 'Affine')
+    line(xx, nmc(xx), 'LineWidth', 2, 'LineStyle', '-', 'Color', 'r', 'DisplayName', 'NMC/Gr')
+    line(xx, lfp(xx), 'LineWidth', 2, 'LineStyle', '-', 'Color', 'b', 'DisplayName', 'LFP/Gr')
 %     line(xx, lfp_affine(xx), 'LineWidth', 2, 'LineStyle', '--', 'Color', 'r', 'DisplayName', 'LFP/Gr, affine')
     xlabel('$z$', 'Interpreter', 'Latex')
     ylabel('$U(z)$', 'Interpreter', 'Latex')

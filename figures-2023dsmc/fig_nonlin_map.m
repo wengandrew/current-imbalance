@@ -6,7 +6,8 @@ function fig_nonlin_map()
     % Configure the simulation
     analysis_type       = 'nmc';
     xvar                = 'i';
-    to_plot_detailed    = false;
+    to_plot_detailed    = true;
+    to_plot_imbalance   = false;
 
     % Initial conditions
     za0 = 0.0;
@@ -17,9 +18,11 @@ function fig_nonlin_map()
         case 'nmc'
             ocv = load_ocv_fn('nmc');
             Vmax = 4.2;
+            affine_name = 'nmc-affine';
         case 'lfp'
             ocv =  load_ocv_fn('lfp');
             Vmax = 3.6;
+            affine_name = 'lfp-affine';
     end
 
     Ra   = 0.15 ;    % Ohms
@@ -27,16 +30,21 @@ function fig_nonlin_map()
 
     % Simulation vectors
     if to_plot_detailed
-        num_grid_points = 5;
+        num_grid_points = 4;
     else
         num_grid_points = 31;
     end
+
+    ocv_lin = load_ocv_fn(affine_name);
+    Vmax_affine = ocv_lin(1);
+    Vmin_affine = ocv_lin(0);
+    alpha = Vmax_affine - Vmin_affine;
 
     simulation_hours = 16;
     dt = 1;
     t = 0:dt:simulation_hours*3600; t = t';
     I = -1/1 * (Qa / 3600) * ones(size(t)); % Current
-    I_cv = I/5;
+    I_cv = I(1)/5;
 
     r_vec = linspace(1.5, 0.5, num_grid_points);
     q_vec = linspace(0.5, 1.5, num_grid_points);
@@ -46,7 +54,7 @@ function fig_nonlin_map()
     dz_max = zeros(numel(r_vec), numel(q_vec));
 
     if to_plot_detailed
-        fh = figure('Position', [500 100 900, 900]);
+        fh = figure('Position', [500 100 1200, 700]);
         th = tiledlayout(numel(r_vec), numel(q_vec), ...
             'Padding', 'none', 'TileSpacing', 'tight', ...
             'TileIndexing', 'rowmajor');
@@ -71,9 +79,26 @@ function fig_nonlin_map()
             p.Ra = Ra;
             p.Rb = Rb;
 
+            % Nonlinear solution
             res = run_discrete_time_simulation_complete(I, -I, ...
                I_cv, Qa, Qb, Ra, Rb, za0, zb0, ocv, ...
                3, Vmax);
+
+            kappa = 1 / alpha * (Ra*Qa - Rb*Qb) / (Qa + Qb);
+
+
+            % Affine solution
+            res_aff = solve_z_dynamics_cccv_complete(t, I, -I, ...
+            I_cv, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin_affine, Vmax_affine);
+
+            % Filter out unwanted states
+            idx = find(res_aff.t >= res_aff.t_chg_cv);
+            res_aff.t(idx) = [];
+            res_aff.za(idx) = [];
+            res_aff.zb(idx) = [];
+            res_aff.Ia(idx) = [];
+            res_aff.Ib(idx) = [];
+            res_aff.Vt(idx) = [];
     
             % Filter out unwanted states
             idx = res.state == 2;
@@ -115,30 +140,52 @@ function fig_nonlin_map()
 
                 if strcmpi(xvar, 'z')
                     xa = res.za; xb = res.zb;
-                    legend_string = {'$z_1$', '$z_2$'};
+                    xaa = res_aff.za; xbb = res_aff.zb;
+                    labels = {'$z_1$', '$z_2$'};
                     label_string = '$z$';
+                    imbalance_string = '$\Delta z$';
+                    boundvar = zbound_linf;
+                    if boundvar > 1; boundvar = 1; end
+                    boundvar_aff = kappa*I(1);
                 elseif strcmpi(xvar, 'i')
                     xa = res.Ia; xb = res.Ib;
-                    legend_string = {'$I_1$', '$I_2$'};
+                    xaa = res_aff.Ia; xbb = res_aff.Ib;
+                    labels = {'$I_1$', '$I_2$'};
                     label_string = '$I$(A)';
+                    imbalance_string = '$\Delta I$';
+                    boundvar = ibound_linf;
+                    boundvar_aff = (Qa - Qb) / (Qa + Qb) * I(1);
                 end
 
-                line(res.t/3600, xb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', ':', 'DisplayName', '$I_1$')
-                line(res.t/3600, xa, 'Color', 'r', 'LineWidth', 2, 'DisplayName', '$I_2$')
+                if to_plot_imbalance
+                    labels = {imbalance_string};
+                    label_string = imbalance_string;
+                    line(res_aff.t/3600, xaa - xbb, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [imbalance_string ' (Affine)'])
+                    yline(boundvar_aff, 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2, 'DisplayName', 'Bound, Affine ($\kappa$I)')
+                    line(res.t/3600, xa - xb, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '-', 'DisplayName', [imbalance_string ' (NMC/Gr)'])
+                    yline(boundvar, 'Color', 'r', 'LineWidth', 2, 'DisplayName', 'Bound, Nonlinear')
 
-%                 line(res.t/3600, xa - xb, 'Color', 'r', 'LineWidth', 2, 'DisplayName', '$I_a$')
-%                 yline(ibound_linf);
-%                 yline(1, 'LineStyle', '-', 'Color', 'r')
+                else
+                    line(res_aff.t/3600, xbb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [labels{1} ' (affine)'])
+                    line(res_aff.t/3600, xaa, 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [labels{2} ' (affine)'])
+                    line(res.t/3600, xb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', '-', 'DisplayName', [labels{1} ' (NMC/Gr)'])
+                    line(res.t/3600, xa, 'Color', 'r', 'LineWidth', 2, 'LineStyle', '-', 'DisplayName', [labels{2} ' (NMC/Gr)'])
+                end
 
+%                 ylim([-1 1])
                 axes = [axes ; ax];
                 
-                if i == 1 && j == 1 ; legend(legend_string) ; end
+                if i == 1 && j == 1 ; lh = legend('show') ; end
 %                     else; legend(sprintf('%g', is_condition_satisfied)); end
-                if j == numel(q_vec) ; set(ax, 'YTickLabel', []) ; end
-                if i == numel(r_vec) ; xlabel(sprintf('$Q_2/Q_1$=%.2g\n$t$ (hrs)', q_vec(j)), 'Interpreter', 'Latex')
+                if j == numel(q_vec) 
+                    %set(ax, 'YTickLabel', []) ; 
+                end
+                if i == numel(r_vec) ; xlabel(sprintf('$t$ (hrs) \n $Q_2/Q_1$=%.2g', q_vec(j)), 'Interpreter', 'Latex')
                     else; set(ax, 'XTickLabel', []) ; end
-                if j == 1; ylabel(sprintf('%s\n$R_2/R_1$=%.2g', label_string,r_vec(i)), 'Interpreter', 'Latex')
-                    else; set(ax, 'YTickLabel', []) ; end
+                if j == 1; ylabel(sprintf('$R_2/R_1$=%.2g\n %s', r_vec(i),label_string), 'Interpreter', 'Latex')
+                    else
+                        %set(ax, 'YTickLabel', []) ; 
+                end
             end
 
             toc
@@ -148,7 +195,7 @@ function fig_nonlin_map()
     end
 
     if to_plot_detailed
-        linkaxes(axes, 'xy'); 
+        linkaxes(axes, 'x'); 
     end
 
 

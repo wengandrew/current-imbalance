@@ -34,6 +34,8 @@ function fig_nonlinear_dynamics_lfp()
     Qb = Qa/q;
     Rb = Ra/r;
 
+    keyboard
+
     current_target = -Qa / (1 * 3600);
 
     %% Test the analytic solution
