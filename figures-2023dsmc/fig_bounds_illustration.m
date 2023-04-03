@@ -153,7 +153,7 @@ function fig_bounds_illustration()
         ylabel('Current (A)')
         legend show
 
-        keyboard
+%         keyboard
         
         ax5 = subplot(514);
         line(tfinal./3600, abs(Ia-Ib), 'Color', 'r', 'DisplayName', 'Analytic')

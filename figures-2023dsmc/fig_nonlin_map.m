@@ -25,7 +25,7 @@ function fig_nonlin_map()
             affine_name = 'lfp-affine';
     end
 
-    Ra   = 0.15 ;    % Ohms
+    Ra   = 0.05 ;    % Ohms
     Qa   = 3 * 3600; % Amp-seconds
 
     % Simulation vectors
@@ -56,7 +56,7 @@ function fig_nonlin_map()
     if to_plot_detailed
         fh = figure('Position', [500 100 1200, 700]);
         th = tiledlayout(numel(r_vec), numel(q_vec), ...
-            'Padding', 'none', 'TileSpacing', 'tight', ...
+            'Padding', 'none', 'TileSpacing', 'none', ...
             'TileIndexing', 'rowmajor');
     
         tile_count = 0;
@@ -157,19 +157,32 @@ function fig_nonlin_map()
                     boundvar_aff = (Qa - Qb) / (Qa + Qb) * I(1);
                 end
 
+
+                % Define time offsets so that the affine and the non-linear simulations
+                % will share common points at the start and end of the CV hold phase.
+                t0 = res_aff.t_chg_cc;
+                t1 = res_aff.t_chg_cv;
+                t3 = res.t(find(res.state==1, 1, 'first'));
+                t2 = res.t(end);
+                idxa = res.t < t2;
+            
+                xline(res_aff.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off')
+    
                 if to_plot_imbalance
                     labels = {imbalance_string};
                     label_string = imbalance_string;
-                    line(res_aff.t/3600, xaa - xbb, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [imbalance_string ' (Affine)'])
+                    line(res_aff.t/3600 - (t0-t3)/3600, xaa - xbb, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [imbalance_string ' (Affine)'])
                     yline(boundvar_aff, 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2, 'DisplayName', 'Bound, Affine ($\kappa$I)')
                     line(res.t/3600, xa - xb, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '-', 'DisplayName', [imbalance_string ' (NMC/Gr)'])
                     yline(boundvar, 'Color', 'r', 'LineWidth', 2, 'DisplayName', 'Bound, Nonlinear')
 
                 else
-                    line(res_aff.t/3600, xbb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [labels{1} ' (affine)'])
-                    line(res_aff.t/3600, xaa, 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [labels{2} ' (affine)'])
+                    line(res_aff.t/3600 - (t0-t3)/3600, xbb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [labels{1} ' (affine)'])
+                    line(res_aff.t/3600 - (t0-t3)/3600, xaa, 'Color', 'r', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', [labels{2} ' (affine)'])
                     line(res.t/3600, xb, 'Color', 'b', 'LineWidth', 2, 'LineStyle', '-', 'DisplayName', [labels{1} ' (NMC/Gr)'])
                     line(res.t/3600, xa, 'Color', 'r', 'LineWidth', 2, 'LineStyle', '-', 'DisplayName', [labels{2} ' (NMC/Gr)'])
+                    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off')
+
                 end
 
 %                 ylim([-1 1])
@@ -178,13 +191,13 @@ function fig_nonlin_map()
                 if i == 1 && j == 1 ; lh = legend('show') ; end
 %                     else; legend(sprintf('%g', is_condition_satisfied)); end
                 if j == numel(q_vec) 
-                    %set(ax, 'YTickLabel', []) ; 
+                    set(ax, 'YTickLabel', []) ; 
                 end
                 if i == numel(r_vec) ; xlabel(sprintf('$t$ (hrs) \n $Q_2/Q_1$=%.2g', q_vec(j)), 'Interpreter', 'Latex')
                     else; set(ax, 'XTickLabel', []) ; end
                 if j == 1; ylabel(sprintf('$R_2/R_1$=%.2g\n %s', r_vec(i),label_string), 'Interpreter', 'Latex')
                     else
-                        %set(ax, 'YTickLabel', []) ; 
+                        set(ax, 'YTickLabel', []) ; 
                 end
             end
 
@@ -195,7 +208,7 @@ function fig_nonlin_map()
     end
 
     if to_plot_detailed
-        linkaxes(axes, 'x'); 
+        linkaxes(axes, 'xy'); 
     end
 
 
