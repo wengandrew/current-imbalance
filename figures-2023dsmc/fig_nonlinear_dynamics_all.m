@@ -39,13 +39,13 @@ function fig_nonlinear_dynamics_all()
     res_lin2 = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
         I_cutoff, alpha, Ra, Rb, Qa, Qb, res_lin.za(end), res_lin.zb(end), ocv_lin, Vmin_affine, Vmax_affine);
 
-    res_nmc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
+    res_nmc = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nmc, 3.0, 4.2);
 
     res_nmc2 = run_discrete_time_simulation_complete(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, res_nmc.za(end), res_nmc.zb(end), ocv_nmc, 3.0, 4.2);
 
-    res_lfp = run_discrete_time_simulation_complete(I_chg, I_dch, ...
+    res_lfp = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_lfp, 3.0, 3.6);
 
     res_lfp2 = run_discrete_time_simulation_complete(I_chg, I_dch, ...
@@ -58,12 +58,12 @@ function fig_nonlinear_dynamics_all()
 
     line(linspace(0, 1, 100), linspace(0, 1, 100), 'LineStyle', '--', 'Color', [0.5, 0.5, 0.5], 'DisplayName', '$z_a=z_b$')
     line(res_lin.zb(1), res_lin.za(1), 'Marker', 'x', 'MarkerSize', 18, 'LineStyle', 'none', 'LineWidth', 2, 'Color', 'k', 'DisplayName', 'I.C.')
-    line(res_lin.zb, res_lin.za, 'LineWidth', 2, 'LineStyle', ':', 'Color', 'k', 'DisplayName', 'Cycle 1 (Affine)')
-    line(res_nmc.zb, res_nmc.za, 'LineWidth', 2, 'LineStyle', ':', 'Color', 'r', 'DisplayName', 'Cycle 1 (NMC/Gr)')
-    line(res_lfp.zb, res_lfp.za, 'LineWidth', 2, 'LineStyle', ':', 'Color', 'b', 'DisplayName', 'Cycle 1 (LFP/Gr)')
-    line(res_lin2.zb, res_lin2.za, 'LineStyle', '-', 'Marker', 'o', 'MarkerSize', 1, 'Color', 'k', 'DisplayName', 'Cycle 2 (Affine)')
-    line(res_nmc2.zb, res_nmc2.za, 'LineWidth', 2, 'LineStyle', '-', 'Color', 'r', 'DisplayName', 'Cycle 2 (NMC/Gr)')
-    line(res_lfp2.zb, res_lfp2.za, 'LineWidth', 2, 'LineStyle', '-', 'Color', 'b', 'DisplayName', 'Cycle 2 (LFP/Gr)')
+    line(res_lin.zb, res_lin.za, 'LineWidth', 2, 'LineStyle', ':', 'Color', 'k', 'DisplayName', 'Affine')
+    line(res_nmc.zb, res_nmc.za, 'LineWidth', 2, 'LineStyle', ':', 'Color', 'r', 'DisplayName', 'NMC/Gr')
+    line(res_lfp.zb, res_lfp.za, 'LineWidth', 2, 'LineStyle', ':', 'Color', 'b', 'DisplayName', 'LFP/Gr')
+%     line(res_lin2.zb, res_lin2.za, 'LineStyle', '-', 'Marker', 'o', 'MarkerSize', 1, 'Color', 'k', 'DisplayName', 'Cycle 2 (Affine)')
+%     line(res_nmc2.zb, res_nmc2.za, 'LineWidth', 2, 'LineStyle', '-', 'Color', 'r', 'DisplayName', 'Cycle 2 (NMC/Gr)')
+%     line(res_lfp2.zb, res_lfp2.za, 'LineWidth', 2, 'LineStyle', '-', 'Color', 'b', 'DisplayName', 'Cycle 2 (LFP/Gr)')
 
     lh = legend('show'); set(lh, 'FontSize', 16)
     xlabel('$z_1$', 'Interpreter', 'Latex')
@@ -138,6 +138,6 @@ function plot_results_imbalance(res_lin, res_nmc, res_lfp, max_hours)
 %     ylim([-0.02 0.02])
 
     linkaxes([ax1, ax2], 'x')
-    xlim([0 max_hours])
+%     xlim([0 max_hours])
 
 end

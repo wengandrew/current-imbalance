@@ -17,92 +17,99 @@ function fig_degradation_convergence()
     [cyc_num_vec3, p3] = simulate(p, 1.5, 0.000002);
 
 
+    RLIM = [130 180];
+    QLIM = [0 5];
+
     set_default_plot_settings()
 
     fh = figure('Position', [500 100 1200 700]);
-    th = tiledlayout(2, 3, 'Padding', 'none', 'TileSpacing', 'tight');
+    th = tiledlayout(2, 3, 'Padding', 'none', 'TileSpacing', 'none');
     th.TileIndexing = 'columnmajor';
 
     % Capacity loss
     ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]);
-    line(cyc_num_vec1, (p1.Qa - p1.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec1, (p1.Qa - p1.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A (control)', 'LineStyle', '--');
+
     line(cyc_num_vec1, (p1.Qb - p1.dQb_vec)./3600, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1');
     line(cyc_num_vec1, (p1.Qb - p1.dQb_control_vec)./3600, 'Color', 'b', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell B (control)', 'LineStyle', '--');
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 1 (control)', 'LineStyle', '--');
+    line(cyc_num_vec1, (p1.Qa - p1.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2');
+    line(cyc_num_vec1, (p1.Qa - p1.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2 (control)', 'LineStyle', '--');
+    title('$p=0.5$', 'Interpreter', 'Latex')
+
     ylabel('$Q$ (Ah)', 'Interpreter', 'Latex')
-    ylim([0 5])
+    ylim(QLIM)
     lh = legend('show'); set(lh, 'Location', 'NorthEast')
 
     ax2 = nexttile(th, 2); box on;
-    line(cyc_num_vec1, (p1.Ra + p1.dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec1, (p1.Ra + p1.dRa_control_vec).*1000, 'Color', 'r', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A (control)', 'LineStyle', '--');
+
     line(cyc_num_vec1, (p1.Rb + p1.dRb_vec).*1000, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1');
     line(cyc_num_vec1, (p1.Rb + p1.dRb_control_vec).*1000, 'Color', 'b', 'Marker', 'none', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B (control)', 'LineStyle', '--');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1 (control)', 'LineStyle', '--');
+    line(cyc_num_vec1, (p1.Ra + p1.dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2');
+    line(cyc_num_vec1, (p1.Ra + p1.dRa_control_vec).*1000, 'Color', 'r', 'Marker', 'none', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2 (control)', 'LineStyle', '--');
     xlabel('Cycle Number', 'Interpreter', 'Latex')
     ylabel('$R$ (m$\Omega$)', 'Interpreter', 'Latex')
-    lh = legend('show'); set(lh, 'Location', 'SouthEast');
+    ylim(RLIM)
 
     % Capacity loss
-    ax3 = nexttile(th, 3); box on; set(ax3,'XTickLabel',[]);
-    line(cyc_num_vec2, (p2.Qa - p2.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec2, (p2.Qa - p2.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A (control)', 'LineStyle', '--');
+    ax3 = nexttile(th, 3); box on; set(ax3,'XTickLabel',[], 'YTickLabel', [])
     line(cyc_num_vec2, (p2.Qb - p2.dQb_vec)./3600, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1');
     line(cyc_num_vec2, (p2.Qb - p2.dQb_control_vec)./3600, 'Color', 'b', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell B (control)', 'LineStyle', '--');
-    ylabel('$Q$ (Ah)', 'Interpreter', 'Latex')
-    ylim([0 5])
-    lh = legend('show'); set(lh, 'Location', 'NorthEast')
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 1 (control)', 'LineStyle', '--');
+    line(cyc_num_vec2, (p2.Qa - p2.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2');
+    line(cyc_num_vec2, (p2.Qa - p2.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2 (control)', 'LineStyle', '--');
 
-    ax4 = nexttile(th, 4); box on;
-    line(cyc_num_vec2, (p2.Ra + p2.dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec2, (p2.Ra + p2.dRa_control_vec).*1000, 'Color', 'r', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A (control)', 'LineStyle', '--');
+    ylim(QLIM)
+    title('$p=1.0$', 'Interpreter', 'Latex')
+
+
+    ax4 = nexttile(th, 4); box on; set(ax4, 'YTickLabel', [])
     line(cyc_num_vec2, (p2.Rb + p2.dRb_vec).*1000, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1');
     line(cyc_num_vec2, (p2.Rb + p2.dRb_control_vec).*1000, 'Color', 'b', 'Marker', 'none', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B (control)', 'LineStyle', '--');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1 (control)', 'LineStyle', '--');
     xlabel('Cycle Number', 'Interpreter', 'Latex')
-    ylabel('$R$ (m$\Omega$)', 'Interpreter', 'Latex')
-    lh = legend('show'); set(lh, 'Location', 'SouthEast');
+    line(cyc_num_vec2, (p2.Ra + p2.dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2');
+    line(cyc_num_vec2, (p2.Ra + p2.dRa_control_vec).*1000, 'Color', 'r', 'Marker', 'none', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2 (control)', 'LineStyle', '--');
+    ylim(RLIM)
 
     % Capacity loss
-    ax5 = nexttile(th, 5); box on; set(ax5,'XTickLabel',[]);
-    line(cyc_num_vec3, (p3.Qa - p3.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec3, (p3.Qa - p3.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A (control)', 'LineStyle', '--');
-    line(cyc_num_vec3, (p3.Qb - p3.dQb_vec)./3600, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+    ax5 = nexttile(th, 5); box on; set(ax5,'XTickLabel',[], 'YTickLabel', [])
+        line(cyc_num_vec3, (p3.Qb - p3.dQb_vec)./3600, 'Color', 'b', 'Marker', 'o', ...
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 1');
     line(cyc_num_vec3, (p3.Qb - p3.dQb_control_vec)./3600, 'Color', 'b', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell B (control)', 'LineStyle', '--');
-    ylabel('$Q$ (Ah)', 'Interpreter', 'Latex')
-    ylim([0 5])
-    lh = legend('show'); set(lh, 'Location', 'NorthEast')
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 1 (control)', 'LineStyle', '--');
+    line(cyc_num_vec3, (p3.Qa - p3.dQa_vec)./3600, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2');
+    line(cyc_num_vec3, (p3.Qa - p3.dQa_control_vec)./3600, 'Color', 'r', 'Marker', 'none', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 2 (control)', 'LineStyle', '--');
 
-    ax6 = nexttile(th, 6); box on;
-    line(cyc_num_vec3, (p3.Ra + p3.dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A');
-    line(cyc_num_vec3, (p3.Ra + p3.dRa_control_vec).*1000, 'Color', 'r', 'Marker', 'none', ...
-        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell A (control)', 'LineStyle', '--');
+    title('$p=1.5$', 'Interpreter', 'Latex')
+    ylim(QLIM)
+
+    ax6 = nexttile(th, 6); box on; set(ax6, 'YTickLabel', [])
+
     line(cyc_num_vec3, (p3.Rb + p3.dRb_vec).*1000, 'Color', 'b', 'Marker', 'o', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 2');
     line(cyc_num_vec3, (p3.Rb + p3.dRb_control_vec).*1000, 'Color', 'b', 'Marker', 'none', ...
-        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell B (control)', 'LineStyle', '--');
+        'MarkerFaceColor', 'b', 'MarkerSize', 2, 'DisplayName', 'Cell 2 (control)', 'LineStyle', '--');
+    line(cyc_num_vec3, (p3.Ra + p3.dRa_vec).*1000, 'Color', 'r', 'Marker', 'o', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 1');
+    line(cyc_num_vec3, (p3.Ra + p3.dRa_control_vec).*1000, 'Color', 'r', 'Marker', 'none', ...
+        'MarkerFaceColor', 'r', 'MarkerSize', 2, 'DisplayName', 'Cell 1 (control)', 'LineStyle', '--');
     xlabel('Cycle Number', 'Interpreter', 'Latex')
-    ylabel('$R$ (m$\Omega$)', 'Interpreter', 'Latex')
-    lh = legend('show'); set(lh, 'Location', 'SouthEast');
+    ylim(RLIM)
 
 %     subplot(223)
 %     line(cyc_num_vec, Issa_vec, 'Color', 'r', 'Marker', 'o', ...
@@ -173,7 +180,7 @@ function [cyc_num_vec, p] = simulate(p, n, gamma)
     t = linspace(0, 10*3600, 1.0e6)';
     I_chg = +current_target*ones(size(t)); % applied current (A)
     I_dch = -current_target*ones(size(t));
-    I_current_cutoff = current_target/20;
+    I_current_cutoff = current_target/5;
 
     % Loop over cycles
     while cyc_num < MAX_CYCLE_NUMBER
@@ -196,11 +203,11 @@ function [cyc_num_vec, p] = simulate(p, n, gamma)
             I_chg, I_dch, I_current_cutoff, za0, zb0, delta_time, ...
             f_ocv, Vmin, Vmax);
 
-        curra = update_states_iss(preva, delta_time, Issa, n, gamma);
-        currb = update_states_iss(prevb, delta_time, Issb, n, gamma);
+        curra = update_states(preva, delta_time, Issa, zssa, n, gamma);
+        currb = update_states(prevb, delta_time, Issb, zssb, n, gamma);
 
-        curra_control = update_states_iss(preva_control, delta_time, I_chg(1)/2, n, gamma);
-        currb_control = update_states_iss(prevb_control, delta_time, I_chg(1)/2, n, gamma);
+        curra_control = update_states(preva_control, delta_time, I_chg(1)/2, 0.8, n, gamma);
+        currb_control = update_states(prevb_control, delta_time, I_chg(1)/2, 0.8, n, gamma);
 
         dQa_vec = [dQa_vec ; curra.dQ];
         dQb_vec = [dQb_vec ; currb.dQ];
@@ -255,7 +262,7 @@ function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, ...
             alpha, I_chg, I_dch, I_current_cutoff, za0, zb0, dt, f_ocv, Vmin, Vmax)
     % Compute steady-state values
 
-    type = 'analytic';
+    type = 'simulation';
 
     switch type
         case 'analytic'
@@ -311,9 +318,8 @@ function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, ...
 end
 
 
-function curr = update_states_iss(prev, delta_time, Iss, n, gamma)
-    % Q-R state update function based on steady-state current imbalance
-    % values
+function curr = update_states(prev, delta_time, Iss, zss, n, gamma)
+    % Q-R state update function based on steady-state imbalance values
     %
     % Parameters
     % ---------
@@ -330,7 +336,8 @@ function curr = update_states_iss(prev, delta_time, Iss, n, gamma)
     %    updated state
 
     % Update rate constants for capacities and resistances
-    kq = gamma*abs(Iss);
+    kq = gamma*abs(zss);
+
 
     kr = 0.000002*kq;
 

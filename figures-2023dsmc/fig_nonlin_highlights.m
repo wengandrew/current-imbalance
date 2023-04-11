@@ -1,4 +1,4 @@
-function fig_nonlinear_dynamics_nmc()
+function fig_nonlin_highlights()
     % Run a full charge CCCV and discharge CC simulation
 
     set_default_plot_settings();
@@ -11,7 +11,8 @@ function fig_nonlinear_dynamics_nmc()
     za0 = 0.40;
     zb0 = 0.20;
     q   = 0.7;
-    r   = 1.1;
+%     r = 1/q;
+    r = 1.1;
 
     switch CHEMISTRY
         case 'lfp'
@@ -34,12 +35,20 @@ function fig_nonlinear_dynamics_nmc()
     Qb = Qa/q;
     Rb = Ra/r;
 
+    p.Qa = Qa;
+    p.Qb = Qb;
+    p.Ra = Ra;
+    p.Rb = Rb;
+
+    kappa = 1 / (Vmax - Vmin) * (Ra*Qa - Rb*Qb) / (Qa + Qb);
+
+
     current_target = -Qa / (1 * 3600);
 
     %% Test the analytic solution
     ocv_lin = load_ocv_fn(affine_name);
     ocv_nonlin = load_ocv_fn(CHEMISTRY);
-    max_hours = 5.5;
+    max_hours = 15;
 
     Vmax_affine = ocv_lin(1);
     Vmin_affine = ocv_lin(0);
@@ -55,15 +64,15 @@ function fig_nonlinear_dynamics_nmc()
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
         I_cutoff, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin_affine, Vmax_affine);
 
-    res_disc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
+    res_disc = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);
 
-    plot_results_default(res_lsim, res_disc, ocv_lin, ocv_nonlin, max_hours)
-    plot_results_imbalance(res_lsim, res_disc, max_hours)
+    plot_results_default(res_lsim, res_disc, ocv_lin, ocv_nonlin, max_hours, p, za0-zb0, t, kappa, I_chg)
+%     plot_results_imbalance(res_lsim, res_disc, max_hours)
 
 end
 
-function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours)
+function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours, p, dz0, t, kappa, I)
 
     % Define time offsets so that the affine and the non-linear simulations
     % will share common points at the start and end of the CV hold phase.
@@ -98,22 +107,43 @@ function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours)
     lh = legend('show', 'Location', 'east');
 
     % SOC plot
+
+    [condition, zbound_l2, zbound_linf, ibound_l2, ibound_linf] = ...
+                solve_imbalance_bounds(ocv_nonlin, p, t, I, dz0);
+
     ax2 = nexttile(th, 2); box on; set(ax2,'XTickLabel',[]); %ylim([0.78 1.05])
-    ylabel('$z$', 'Interpreter', 'Latex')
+    ylim([-0.23 0.23])
+    ylabel('$\Delta z$', 'Interpreter', 'Latex')
 
-    line(resa.t./3600 - (t0-t3)/3600, resa.zb, 'Color', 'b', 'LineStyle', '--', 'DisplayName', '$z_1$ (affine)', 'LineWidth', 2)
-    line(resa.t./3600 - (t0-t3)/3600, resa.za, 'Color', 'r', 'LineStyle', '--', 'DisplayName', '$z_2$ (affine)', 'LineWidth', 2)
+    line(resa.t./3600 - (t0-t3)/3600, resa.za - resa.zb, 'LineStyle', '--', 'LineWidth', 2, 'Color', 'k', 'DisplayName', '$\Delta z$ (affine)')
+    line(resb.t(idxa)./3600, resb.za(idxa) - resb.zb(idxa), 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$\Delta z$ (non-linear)')
+    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.za(idxb) - resb.zb(idxb), 'Color', 'k', 'LineWidth', 2, 'HandleVisibility', 'off')
 
-    line(resb.t(idxa)./3600, resb.zb(idxa), 'Color', 'b', 'DisplayName', '$z_1$ (NMC/Gr)', 'LineWidth', 2)
-    line(resb.t(idxa)./3600, resb.za(idxa), 'Color', 'r', 'DisplayName', '$z_2$ (NMC/Gr)', 'LineWidth', 2)
-
-    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.za(idxb), 'Color', 'r', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
-    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.zb(idxb), 'Color', 'b', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
+    yline(kappa*I(1), 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2, 'DisplayName', 'Bound (affine, $\kappa$I)')
+    yline(zbound_linf, 'Color', 'r', 'LineWidth', 2, 'DisplayName', 'Bound (nonlinear)')
+    yline(-kappa*I(1), 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2, 'HandleVisibility', 'off')
+    yline(-zbound_linf, 'Color', 'r', 'LineWidth', 2, 'HandleVisibility', 'off')
 
     xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    ylim([0.0 1.1])
-    legend show
+    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
+    lh = legend('Show', 'Location', 'Best');
+%     ylabel('$z$', 'Interpreter', 'Latex')
+% 
+%     line(resa.t./3600 - (t0-t3)/3600, resa.zb, 'Color', 'b', 'LineStyle', '--', 'DisplayName', '$z_1$ (affine)', 'LineWidth', 2)
+%     line(resa.t./3600 - (t0-t3)/3600, resa.za, 'Color', 'r', 'LineStyle', '--', 'DisplayName', '$z_2$ (affine)', 'LineWidth', 2)
+% 
+% 
+%     line(resb.t(idxa)./3600, resb.zb(idxa), 'Color', 'b', 'DisplayName', '$z_1$ (NMC/Gr)', 'LineWidth', 2)
+%     line(resb.t(idxa)./3600, resb.za(idxa), 'Color', 'r', 'DisplayName', '$z_2$ (NMC/Gr)', 'LineWidth', 2)
+% 
+%     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.za(idxb), 'Color', 'r', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
+%     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.zb(idxb), 'Color', 'b', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
+% 
+%     xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
+%     xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
+%     ylim([0.0 1.1])
+%     legend show
 
     % Voltage plot
     ax3 = nexttile(th, 3); box on;
@@ -128,8 +158,8 @@ function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours)
     line(resb.t(idxa)./3600, ocv_nonlin(resb.za(idxa)), 'LineWidth', 2, 'Color', 'r', 'DisplayName', '$U_2$ (NMC/Gr)')
 
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Vt(idxb), 'Color', 'k', 'LineWidth', 2, 'HandleVisibility', 'off')
-    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, ocv_lin(resb.za(idxb)), 'LineWidth', 2, 'Color', 'r', 'HandleVisibility', 'off')
-    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, ocv_lin(resb.zb(idxb)), 'LineWidth', 2, 'Color', 'b', 'HandleVisibility', 'off')
+    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, ocv_nonlin(resb.za(idxb)), 'LineWidth', 2, 'Color', 'r', 'HandleVisibility', 'off')
+    line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, ocv_nonlin(resb.zb(idxb)), 'LineWidth', 2, 'Color', 'b', 'HandleVisibility', 'off')
 
     xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off')
     xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off')

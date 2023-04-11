@@ -4,10 +4,10 @@ function fig_nonlin_map()
     set_default_plot_settings()
 
     % Configure the simulation
-    analysis_type       = 'nmc';
-    xvar                = 'i';
-    to_plot_detailed    = true;
-    to_plot_imbalance   = false;
+    analysis_type       = 'lfp';
+    xvar                = 'z'; % z (soc) or i (current)
+    to_plot_detailed    = false;
+    to_plot_imbalance   = true;
 
     % Initial conditions
     za0 = 0.0;
@@ -32,7 +32,7 @@ function fig_nonlin_map()
     if to_plot_detailed
         num_grid_points = 4;
     else
-        num_grid_points = 31;
+        num_grid_points = 60;
     end
 
     ocv_lin = load_ocv_fn(affine_name);
@@ -40,7 +40,7 @@ function fig_nonlin_map()
     Vmin_affine = ocv_lin(0);
     alpha = Vmax_affine - Vmin_affine;
 
-    simulation_hours = 16;
+    simulation_hours = 160;
     dt = 1;
     t = 0:dt:simulation_hours*3600; t = t';
     I = -1/1 * (Qa / 3600) * ones(size(t)); % Current
@@ -52,6 +52,9 @@ function fig_nonlin_map()
     dz_ss = zeros(numel(r_vec), numel(q_vec));
     di_max = zeros(numel(r_vec), numel(q_vec));
     dz_max = zeros(numel(r_vec), numel(q_vec));
+
+    di_max_sign = zeros(numel(r_vec), numel(q_vec));
+    dz_max_sign = zeros(numel(r_vec), numel(q_vec));
 
     if to_plot_detailed
         fh = figure('Position', [500 100 1200, 700]);
@@ -80,7 +83,7 @@ function fig_nonlin_map()
             p.Rb = Rb;
 
             % Nonlinear solution
-            res = run_discrete_time_simulation_complete(I, -I, ...
+            res = run_discrete_time_simulation_multicycle(I, -I, ...
                I_cv, Qa, Qb, Ra, Rb, za0, zb0, ocv, ...
                3, Vmax);
 
@@ -91,23 +94,23 @@ function fig_nonlin_map()
             res_aff = solve_z_dynamics_cccv_complete(t, I, -I, ...
             I_cv, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin_affine, Vmax_affine);
 
-            % Filter out unwanted states
-            idx = find(res_aff.t >= res_aff.t_chg_cv);
-            res_aff.t(idx) = [];
-            res_aff.za(idx) = [];
-            res_aff.zb(idx) = [];
-            res_aff.Ia(idx) = [];
-            res_aff.Ib(idx) = [];
-            res_aff.Vt(idx) = [];
-    
-            % Filter out unwanted states
-            idx = res.state == 2;
-            res.t(idx) = [];
-            res.za(idx) = [];
-            res.zb(idx) = [];
-            res.Ia(idx) = [];
-            res.Ib(idx) = [];
-            res.Vt(idx) = [];
+%             % Filter out unwanted states
+%             idx = find(res_aff.t >= res_aff.t_chg_cv);
+%             res_aff.t(idx) = [];
+%             res_aff.za(idx) = [];
+%             res_aff.zb(idx) = [];
+%             res_aff.Ia(idx) = [];
+%             res_aff.Ib(idx) = [];
+%             res_aff.Vt(idx) = [];
+%     
+%             % Filter out unwanted states
+%             idx = res.state == 2;
+%             res.t(idx) = [];
+%             res.za(idx) = [];
+%             res.zb(idx) = [];
+%             res.Ia(idx) = [];
+%             res.Ib(idx) = [];
+%             res.Vt(idx) = [];
 
             assert(~isnan(res.Ia(end)))
 
@@ -121,9 +124,12 @@ function fig_nonlin_map()
             dz = abs(res.za - res.zb);
             idx = find(dz == max(dz));
             dz_sign = sign(res.za(idx) - res.zb(idx));
-              
-            di_max(i, j) = dI_sign(1).*max(abs(res.Ia - res.Ib));
-            dz_max(i, j) = dz_sign(1).*max(abs(res.za - res.zb));
+
+            di_max(i, j) = max(abs(res.Ia - res.Ib));
+            dz_max(i, j) = max(abs(res.za - res.zb));
+
+            di_max_sign(i, j) = dI_sign(end);
+            dz_max_sign(i, j) = dz_sign(end);
 
             % Calculate imbalance bounds
             [condition, zbound_l2, zbound_linf, ibound_l2, ibound_linf] = ...
@@ -212,8 +218,9 @@ function fig_nonlin_map()
     end
 
 
-    make_plot(q_vec, r_vec, dz_max, '$|\Delta z|_{\mathrm{max}}$')
+    make_plot(q_vec, r_vec, dz_max_sign, '$|\Delta z|_{\mathrm{max}}$')
     make_plot(q_vec, r_vec, di_max, '$|\Delta I|_{\mathrm{max}}$ (A)')
+keyboard
     
 end
 
@@ -265,12 +272,12 @@ end
 function add_marker_annotations()
 
     % Add marker annotations for specific points in the parameter space
-    qq = [1, 0.8, 1, 0.7];
-    rr = [1, 1.25, 1.5, 1.1];
+    qq = [1, 0.8, 1, 0.7, 0.7];
+    rr = [1, 1.25, 1.5, 1.1, 1/0.7];
 
-    marker_vec = {'o', 's', '^', 'o'};
+    marker_vec = {'o', 's', '^', 'o', 's'};
 
-    for i = 4
+    for i = 4:5
 
         q = qq(i);
         r = rr(i);
@@ -281,7 +288,7 @@ function add_marker_annotations()
         'MarkerFaceColor', [0 0.5 0], ...
         'LineStyle', 'none', ...
         'MarkerSize', 12, ...
-        'DisplayName', sprintf('$(q,r)=(%g,%g)$', q, r));
+        'DisplayName', sprintf('$(q,r)=(%.2f,%.2f)$', q, r));
 
     end
 
