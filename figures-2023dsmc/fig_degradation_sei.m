@@ -47,7 +47,9 @@ function fig_degradation_sei()
 
         fprintf('Simulating cycle %g ...\n', cyc_num)
 
-        if cyc_num < 500
+        if cyc_num < 300
+            kc = ka;
+        elseif cyc_num > 600
             kc = ka;
         else
             kc = kb;
@@ -84,43 +86,46 @@ function fig_degradation_sei()
 
     % Capacity loss
     ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]);
-    ylabel('$Q$ (Ah)', 'Interpreter', 'Latex')
+    ylabel('$Q_i$ (Ah)', 'Interpreter', 'Latex')
 
-    line(cyc_num_vec, (p.Qa - dQa1_vec)./3600, 'Color', 'r', ...
-        'LineWidth', 2, 'DisplayName', 'Usage A');
-    line(cyc_num_vec, (p.Qa - dQa2_vec)./3600, 'Color', 'b', ...
-        'LineWidth', 2, 'DisplayName', 'Usage B');
     line(cyc_num_vec, (p.Qa - dQa_vec)./3600, 'Color', 'k',  ...
-        'LineStyle', '--', 'LineWidth', 3, 'DisplayName', 'Usage A $\rightarrow$ B');
-    lh = legend('show');
+        'LineStyle', '-', 'LineWidth', 3, 'DisplayName', 'Mixed');
+    line(cyc_num_vec, (p.Qa - dQa1_vec)./3600, 'Color', 'r', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 1');
+    line(cyc_num_vec, (p.Qa - dQa2_vec)./3600, 'Color', 'b', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
+    ylim([0.8 3])
+    lh = legend('show'); set(lh, 'Location', 'SouthWest')
 
     % Resistance growth
     ax2 = nexttile(th, 2); set(ax2, 'XTickLabel', []); box on;
-    ylabel(ax2, '$R$ (m$\Omega$)', 'Interpreter', 'Latex')
+    ylabel(ax2, '$R_i$ (m$\Omega$)', 'Interpreter', 'Latex')
 
-    line(cyc_num_vec, (p.Ra + dRa1_vec).*1000, 'Color', 'r', ...
-        'LineWidth', 2, 'DisplayName', 'Usage A');
-    line(cyc_num_vec, (p.Ra + dRa2_vec).*1000, 'Color', 'b', ...
-        'LineWidth', 2, 'DisplayName', 'Usage B');
     line(cyc_num_vec, (p.Ra + dRa_vec).*1000, 'Color', 'k', ...
-        'LineStyle', '--', 'LineWidth', 3, 'DisplayName', 'Usage A $\rightarrow$ B');
+        'LineStyle', '-', 'LineWidth', 3, 'DisplayName', 'Mixed');
+    line(cyc_num_vec, (p.Ra + dRa1_vec).*1000, 'Color', 'r', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 1');
+    line(cyc_num_vec, (p.Ra + dRa2_vec).*1000, 'Color', 'b', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
+
     xlabel('Cycle Number', 'Interpreter', 'Latex')
-    lh = legend('show', 'Interpreter', 'Latex');
+%     lh = legend('show', 'Interpreter', 'Latex');
 
     % Rate constant
     ax3 = nexttile(th, 3); box on;
-    ylabel(ax3, '$k$', 'Interpreter', 'Latex')
+    ylabel(ax3, '$r_i$', 'Interpreter', 'Latex')
     xlabel(ax3, 'Cycle Number')
 
-    line(cyc_num_vec, ka*ones(size(cyc_num_vec)), 'Color', 'r', ...
-        'LineWidth', 2, 'DisplayName', 'Usage A');
-    line(cyc_num_vec, kb*ones(size(cyc_num_vec)), 'Color', 'b', ...
-        'LineWidth', 2, 'DisplayName', 'Usage B');
     line(cyc_num_vec, kc_vec, 'Color', 'k', ...
-        'LineStyle', '--', 'LineWidth', 3, ...
-        'DisplayName', 'Usage A $\rightarrow$ B');
-    xlabel('Cycle Number', 'Interpreter', 'Latex')
-    lh = legend('show', 'Interpreter', 'Latex');
+        'LineStyle', '-', 'LineWidth', 3, ...
+        'DisplayName', 'Mixed');
+    line(cyc_num_vec, ka*ones(size(cyc_num_vec)), 'Color', 'r', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 1');
+    line(cyc_num_vec, kb*ones(size(cyc_num_vec)), 'Color', 'b', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
+
+    xlabel('$n$', 'Interpreter', 'Latex')
+%     lh = legend('show', 'Interpreter', 'Latex');
     ylim([min([ka, kb, kc])*0.9 max([ka, kb, kc])*1.1])
 
 

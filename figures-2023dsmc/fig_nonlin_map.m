@@ -92,7 +92,7 @@ function fig_nonlin_map()
 
             % Affine solution
             res_aff = solve_z_dynamics_cccv_complete(t, I, -I, ...
-            I_cv, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin_affine, Vmax_affine);
+            I_cv, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
 
 %             % Filter out unwanted states
 %             idx = find(res_aff.t >= res_aff.t_chg_cv);
@@ -218,7 +218,7 @@ function fig_nonlin_map()
     end
 
 
-    make_plot(q_vec, r_vec, dz_max_sign, '$|\Delta z|_{\mathrm{max}}$')
+    make_plot(q_vec, r_vec, dz_max, '$|\Delta z|_{\mathrm{max}}$')
     make_plot(q_vec, r_vec, di_max, '$|\Delta I|_{\mathrm{max}}$ (A)')
 keyboard
     

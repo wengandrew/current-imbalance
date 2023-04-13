@@ -41,9 +41,6 @@ function fig_nonlinear_dynamics_nmc()
     ocv_nonlin = load_ocv_fn(CHEMISTRY);
     max_hours = 5.5;
 
-    Vmax_affine = ocv_lin(1);
-    Vmin_affine = ocv_lin(0);
-    alpha = Vmax_affine - Vmin_affine;
 
     % Initialize simulation parameters
     t = linspace(0, max_hours*3600, 1.0e6)';
@@ -53,7 +50,7 @@ function fig_nonlinear_dynamics_nmc()
     I_cutoff = current_target/20;
 
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin_affine, Vmax_affine);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
 
     res_disc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);

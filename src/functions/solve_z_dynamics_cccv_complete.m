@@ -1,6 +1,6 @@
 function out = solve_z_dynamics_cccv_complete(tcc, ...
-            I_chg, I_dch, I_current_cutoff, alpha, Ra, Rb, Qa, Qb, za0, zb0, ...
-            ocv_fn, Vmin, Vmax)
+            I_chg, I_dch, I_current_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ...
+            ocv_fn)
     % State of charge dynamics computation for a full charge-discharge
     % cycle, including:
     %
@@ -16,7 +16,6 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     %   I_chg:  current input vector for charge (n elements)
     %   I_dch:  current input vector for discharge (n elements)
     %   I_current_cutoff: CV hold cutoff condition in Amperes
-    %   alpha:  OCV by SOC slope parameter, assuming affine OCV function
     %   Ra:     series resistance of cell A
     %   Rb:     series resistance of cell B
     %   Qa:     capacity of cell A in Ampere-seconds
@@ -24,8 +23,6 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     %   za0:    initial state of charge for cell A (0,1)
     %   zb0:    initial state of charge for cell B (0,1)
     %   ocv_fn: OCV function = f(z), z in (0,1)
-    %   Vmin:   target discharge min voltage
-    %   Vmax:   target charge max voltage
     %
     % Outputs:
     % ---------
@@ -35,6 +32,10 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     % I'm not sure how to use lsim to terminate the sim after a certain
     % condition, so I'm going to simulate for a large time vector then 
     % truncate the output.
+
+    Vmax = ocv_fn(1);
+    Vmin = ocv_fn(0);
+    alpha = Vmax - Vmin;
 
     % Constant current charge
     cc1 = solve_cc(tcc, I_chg, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vmax);

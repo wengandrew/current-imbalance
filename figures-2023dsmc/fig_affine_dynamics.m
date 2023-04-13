@@ -22,6 +22,13 @@ function fig_affine_dynamics()
 
     current_target = -Qa / (1 * 3600);
 
+    p.Qa = Qa;
+    p.Qb = Qb;
+    p.Ra = Ra;
+    p.Rb = Rb;
+    p.kappa = 1/alpha * (Ra*Qa - Rb*Qb) / (Qa + Qb);
+    p.I = current_target;
+
     %% Test the analytic solution
     ocv_lin = @(z) U0 + alpha * z;
     ocv_nonlin = load_ocv_fn('nmc-affine');
@@ -33,19 +40,19 @@ function fig_affine_dynamics()
     I_cutoff = current_target/5;
     
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
 
     res_lsim2 = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, alpha, Ra, Rb, Qa, Qb, res_lsim.za(end), res_lsim.zb(end), ...
-        ocv_lin, Vmin, Vmax);
+        I_cutoff, Ra, Rb, Qa, Qb, res_lsim.za(end), res_lsim.zb(end), ...
+        ocv_lin);
 
     res_lsim3 = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, alpha, Ra, Rb, Qa, Qb, res_lsim2.za(end), res_lsim2.zb(end), ...
-        ocv_lin, Vmin, Vmax);
+        I_cutoff, Ra, Rb, Qa, Qb, res_lsim2.za(end), res_lsim2.zb(end), ...
+        ocv_lin);
 
 
     plot_results_default(res_lsim, ocv_lin)
-    plot_results_imbalance(res_lsim)
+    plot_results_imbalance(res_lsim, p)
 
     % Plot limit cycles in the z_a, z_b diagram
     fh = figure('Position', [500 100 500 500]); box on; grid off;
@@ -169,9 +176,10 @@ function plot_results_default(res, ocv)
 
 end
 
-function plot_results_imbalance(res)
+function plot_results_imbalance(res, p)
     %% Make plots for the imbalance dynamics
 
+    
     %% Plot the results
     fh = figure('Position', [500 100 600 600]);
     th = tiledlayout(2, 1, 'Padding', 'none', 'TileSpacing', 'none'); 
@@ -185,12 +193,14 @@ function plot_results_imbalance(res)
     xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
     xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
     yline(0, 'LineStyle', ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    
+
     line(res.t./3600, res.Ia - res.Ib, 'Color', 'k', 'LineWidth', 3, 'DisplayName', '$\Delta I$')
     if isfield(res, 'Ia_ohmic')
         line(res.t./3600, res.Ia_ohmic - res.Ib_ohmic, 'Color', 'k', 'LineWidth', 2, 'LineStyle', ':', 'DisplayName', '$\Delta I_{\mathrm{ohmic}}$')
         line(res.t./3600, res.Ia_rebal - res.Ib_rebal, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', '$\Delta I_{\mathrm{rebal}}$')
     end
+    yline(+(p.Qa-p.Qb)/(p.Qa+p.Qb)*p.I, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'm', 'DisplayName', '$\pm\Delta I_{ss}$')
+    yline(-(p.Qa-p.Qb)/(p.Qa+p.Qb)*p.I, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'm', 'HandleVisibility', 'off')
     
     lh = legend('show', 'Location', 'best', 'FontSize', FONT);
 
@@ -200,8 +210,10 @@ function plot_results_imbalance(res)
     xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     yline(0, 'LineStyle', ':', 'Color', [0.5 0.5 0.5], 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    
     line(res.t./3600, res.za - res.zb, 'Color', 'k', 'LineWidth', 3, 'DisplayName', '$\Delta z$')
+    yline(+p.kappa*p.I, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'm', 'DisplayName', '$\pm\Delta z_{ss}$')
+    yline(-p.kappa*p.I, 'LineWidth', 2, 'LineStyle', '--', 'Color', 'm', 'HandleVisibility', 'off')
+
     if isfield(res, 'za_ohmic')
 %         line(res.t./3600, res.za_ohmic - res.zb_ohmic, 'Color', 'k', 'LineWidth', 2, 'LineStyle', ':', 'DisplayName', '$\Delta z_{\mathrm{ext}}$')
 %         line(res.t./3600, res.za_rebal - res.zb_rebal, 'Color', 'k', 'LineWidth', 2, 'LineStyle', '--', 'DisplayName', '$\Delta z_{\mathrm{int}}$')

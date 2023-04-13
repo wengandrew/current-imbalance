@@ -262,7 +262,7 @@ function [Issa, Issb, zssa, zssb] = update_cycle_metrics(Qa, Qb, Ra, Rb, ...
             alpha, I_chg, I_dch, I_current_cutoff, za0, zb0, dt, f_ocv, Vmin, Vmax)
     % Compute steady-state values
 
-    type = 'simulation';
+    type = 'analytic';
 
     switch type
         case 'analytic'
@@ -336,7 +336,7 @@ function curr = update_states(prev, delta_time, Iss, zss, n, gamma)
     %    updated state
 
     % Update rate constants for capacities and resistances
-    kq = gamma*abs(zss);
+    kq = gamma*abs(Iss);
 
 
     kr = 0.000002*kq;
