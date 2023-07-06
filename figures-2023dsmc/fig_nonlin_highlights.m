@@ -1,18 +1,27 @@
-function fig_nonlin_highlights()
+function fig_nonlin_highlights(plot_type_int)
     % Run a full charge CCCV and discharge CC simulation
+    %
+    % Parameters
+    % ----------
+    % plot_type_int: (1) or (2)
 
     set_default_plot_settings();
 
     CHEMISTRY = 'nmc';
-
+    
     % Initialize model parameters
     Ra  = 0.15; % ohms
     Qa  = 3.00 * 3600; % As
     za0 = 0.40;
     zb0 = 0.20;
     q   = 0.7;
-%     r = 1/q;
-    r = 1.1;
+
+    switch plot_type_int
+        case 1
+            r = 1.1;
+        case 2
+            r = 1/q; % QR matching condition
+    end
 
     switch CHEMISTRY
         case 'lfp'
@@ -22,8 +31,8 @@ function fig_nonlin_highlights()
             affine_name = 'lfp-affine';
         case 'nmc'
             Vmax = 4.2;
-            Vmin = 3.0;
-            U0 = 3.0;
+            Vmin = 3.31;
+            U0 = 3.31;
             affine_name = 'nmc-affine';
         case 'nmc-umbl2022feb'
             Vmax = 4.2;
@@ -58,7 +67,7 @@ function fig_nonlin_highlights()
     I_cutoff = current_target/20;
 
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
 
     res_disc = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);

@@ -1,6 +1,6 @@
 function out = solve_z_dynamics_cccv_complete(tcc, ...
             I_chg, I_dch, I_current_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ...
-            ocv_fn)
+            ocv_fn, Vmin, Vmax)
     % State of charge dynamics computation for a full charge-discharge
     % cycle, including:
     %
@@ -33,9 +33,7 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     % condition, so I'm going to simulate for a large time vector then 
     % truncate the output.
 
-    Vmax = ocv_fn(1);
-    Vmin = ocv_fn(0);
-    alpha = Vmax - Vmin;
+    alpha = ocv_fn(1) - ocv_fn(0);
 
     % Constant current charge
     cc1 = solve_cc(tcc, I_chg, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vmax);
@@ -67,6 +65,7 @@ function out = solve_z_dynamics_cccv_complete(tcc, ...
     out.t_chg_cv = cc1.t(end) + cv1.t(end);
     out.t_dch_cc = out.t(end);
 
+   
 end
 
 function out = solve_cc(t, I, Ra, Rb, Qa, Qb, alpha, za0, zb0, ocv_fn, Vlim)
@@ -160,6 +159,7 @@ function out = solve_cv(t, R2, R1, Q2, Q1, alpha, z20, z10, Vmin, Vmax, I_curren
     Q = Q1 + Q2;
     kappa = (R2*Q2-R1*Q1)/(Q1+Q2)/alpha;
     tau = (R1+R2)/alpha*(Q1*Q2)/(Q1+Q2);
+
     switch Z_SOLUTION_METHOD
 
         case 'lsim'

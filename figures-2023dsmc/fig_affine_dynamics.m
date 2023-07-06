@@ -40,15 +40,15 @@ function fig_affine_dynamics()
     I_cutoff = current_target/5;
     
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
 
     res_lsim2 = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
         I_cutoff, Ra, Rb, Qa, Qb, res_lsim.za(end), res_lsim.zb(end), ...
-        ocv_lin);
+        ocv_lin, Vmin, Vmax);
 
     res_lsim3 = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
         I_cutoff, Ra, Rb, Qa, Qb, res_lsim2.za(end), res_lsim2.zb(end), ...
-        ocv_lin);
+        ocv_lin, Vmin, Vmax);
 
 
     plot_results_default(res_lsim, ocv_lin)

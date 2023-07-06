@@ -21,8 +21,8 @@ function fig_nonlinear_dynamics_nmc()
             affine_name = 'lfp-affine';
         case 'nmc'
             Vmax = 4.2;
-            Vmin = 3.0;
-            U0 = 3.0;
+            Vmin = 3.31;
+            U0 = 3.31;
             affine_name = 'nmc-affine';
         case 'nmc-umbl2022feb'
             Vmax = 4.2;
@@ -50,7 +50,7 @@ function fig_nonlinear_dynamics_nmc()
     I_cutoff = current_target/20;
 
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
 
     res_disc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);

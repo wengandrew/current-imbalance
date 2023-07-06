@@ -31,9 +31,9 @@ function fig_nonlinear_dynamics_all()
     I_cutoff = current_target/20;
 
     res_lin_nmc = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin_nmc);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin_nmc, 3.0, 4.2);
     res_lin_lfp = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin_lfp);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin_lfp, 3.0, 3.6);
     res_nmc = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nmc, 3.0, 4.2);
 

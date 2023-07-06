@@ -3,8 +3,6 @@ function fig_nonlinear_dynamics_lfp()
 
     set_default_plot_settings();
 
-    CHEMISTRY = 'lfp';
-
     % Initialize model parameters
     Ra  = 0.05; % ohms
     Qa  = 3.00 * 3600; % As
@@ -13,23 +11,8 @@ function fig_nonlinear_dynamics_lfp()
     q   = 0.7;
     r   = 1.1;
 
-    switch CHEMISTRY
-        case 'lfp'
-            Vmax = 3.6;
-            U0 = 3.0;
-            Vmin = 3.0;
-            affine_name = 'lfp-affine';
-        case 'nmc'
-            Vmax = 4.2;
-            Vmin = 3.0;
-            U0 = 3.0;
-            affine_name = 'nmc-affine';
-        case 'nmc-umbl2022feb'
-            Vmax = 4.2;
-            Vmin = 3.0;
-            U0 = 3.0;
-            affine_name = 'nmc-affine';
-    end
+    Vmax = 3.6;
+    Vmin = 3.0;
 
     Qb = Qa/q;
     Rb = Ra/r;
@@ -37,8 +20,8 @@ function fig_nonlinear_dynamics_lfp()
     current_target = -Qa / (1 * 3600);
 
     %% Test the analytic solution
-    ocv_lin = load_ocv_fn(affine_name);
-    ocv_nonlin = load_ocv_fn(CHEMISTRY);
+    ocv_lin = load_ocv_fn('lfp-affine');
+    ocv_nonlin = load_ocv_fn('lfp');
     max_hours = 4.5;
 
     % Initialize simulation parameters
@@ -49,7 +32,7 @@ function fig_nonlinear_dynamics_lfp()
     I_cutoff = current_target/20;
 
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
+        I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
 
     res_disc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);

@@ -17,10 +17,12 @@ function fig_nonlin_map()
     switch analysis_type
         case 'nmc'
             ocv = load_ocv_fn('nmc');
+            Vmin = 3.0;
             Vmax = 4.2;
             affine_name = 'nmc-affine';
         case 'lfp'
             ocv =  load_ocv_fn('lfp');
+            Vmin = 3.0;
             Vmax = 3.6;
             affine_name = 'lfp-affine';
     end
@@ -92,7 +94,7 @@ function fig_nonlin_map()
 
             % Affine solution
             res_aff = solve_z_dynamics_cccv_complete(t, I, -I, ...
-            I_cv, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin);
+            I_cv, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
 
 %             % Filter out unwanted states
 %             idx = find(res_aff.t >= res_aff.t_chg_cv);
