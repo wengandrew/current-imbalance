@@ -1,17 +1,38 @@
-function aw20230303_model_vs_measured()
+function aw20230303_model_vs_measured(plottype)
     % Run a full charge CCCV and discharge CC simulation
+    %
+    % Parameters
+    % ----------
+    % plottype: 'c10' or 'c4' only
 
     set_default_plot_settings()
 
-    CHEMISTRY = 'nmc-umbl2022feb';
+    tbla = readtable('data/params_cell151805.csv');
+    tblb = readtable('data/params_cell152098.csv');
+
+    ocv_a = griddedInterpolant(tbla.soc/100, tbla.ocv, 'linear', 'linear');
+    ocv_b = griddedInterpolant(tblb.soc/100, tblb.ocv, 'linear', 'linear');
 
     % Initialize model parameters
-    Ra  = 0.164; % ohms
-    Qa  = 1.98 * 3600; % As
-    za0 = 0.00;
-    zb0 = 0.0;
-    q   = 0.94;
-    r   = 1.48;
+    
+    % Add general support for SOC-dependent resistances.
+    % But to make the results consistent with the proposed OCV-R model, 
+    % we will actually make these look-up functions return static values
+    % for DCR which equal the SOC-averaged DCR value for each cell.
+    Ra = griddedInterpolant(tbla.soc/100, ones(size(tbla.dcr))*mean(tbla.dcr), 'linear', 'linear');
+    Rb = griddedInterpolant(tblb.soc/100, ones(size(tblb.dcr))*mean(tblb.dcr), 'linear', 'linear');
+    
+    % Uncomment out the lines below to get the non-linear resistance table
+    % lookups.
+    %     Ra = griddedInterpolant(tbla.soc/100, tbla.dcr, 'linear', 'linear');
+    %     Rb = griddedInterpolant(tblb.soc/100, tblb.dcr, 'linear', 'linear');
+
+    Qa = 1.83 * 3600; % As - measured from C/20 discharge capacity
+    Qb = 1.93 * 3600; % As - measured from C/20 discharge capacity
+    
+   
+    za0 = 0.00325; % Tune to start at around 3.035V, to match the data
+    zb0 = 0.00325; % Tune to start at around 3.035V, to match the data
 
     Vmax = 4.2;
     Vmin = 3.0;
@@ -19,161 +40,89 @@ function aw20230303_model_vs_measured()
     
     alpha = Vmax - Vmin;
 
-    Qb = Qa/q;
-    Rb = Ra/r;
+    % Get the raw data in there
+    if strcmpi(plottype, 'c10')
+        data = readtable('data/expt_c_over_10.csv');
+        data.test_time_s = data.test_time_s - 0.98294*3600 + 0.146*3600;
+        hours = 10;
+    elseif strcmpi(plottype, 'c4')
+        data = readtable('data/expt_c_over_4.csv');
+        data.test_time_s = data.test_time_s - 0.98294*3600;
+        hours = 4;
+    end
 
-    current_target = - 2 * 2.37 / 1; % A
-
+    current_target = - 2 * 2.5 / hours; % Total current / Amperes
 
     %% Test the analytic solution
     ocv_lin = @(z) U0 + alpha * z;
-    ocv_nonlin = load_ocv_fn(CHEMISTRY);
 
     % Initialize simulation parameters
-    t = linspace(0, 3*3600, 1.0e6)';
+    t = linspace(0, (hours+5)*3600, 1.0e6)';
     I_chg = +current_target*ones(size(t)); % applied current (A) 
     I_dch = -current_target*ones(size(t));
-    I_cutoff = current_target/50;
+    I_cutoff = 2.5/30;
     
     res_lsim = solve_z_dynamics_cccv_complete(t, I_chg, I_dch, ...
-        I_cutoff, alpha, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
+        I_cutoff, mean(Ra(0:0.01:1)), mean(Rb(0:0.01:1)), Qa, Qb, za0, zb0, ocv_lin);
 
-    res_disc = run_discrete_time_simulation_complete(I_chg, I_dch, ...
-        I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);
+    res_disc = run_discrete_time_simulation_complete_nonlinr(I_chg, I_dch, ...
+        I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_a, ocv_b, Vmin, Vmax);
 
-    plot_results_default(res_lsim)
-    plot_results_default(res_disc)
-    plot_results_imbalance(res_lsim)
-    plot_results_imbalance(res_disc)
-    plot_results_phase(res_disc)
 
-end
-
-function plot_results_phase(res)
+    % Current imbalance
+    fh = figure('Position', [500 100 650 600]);
+    th = tiledlayout(2, 1, 'Padding', 'none', 'TileSpacing', 'compact'); 
     
-    % Here is some kind of experimental phase diagram
-    figure(); plot(gradient(res.Vt)./gradient(res.t./3600), ...
-              res.Ia - res.Ib, 'LineStyle', 'none', ...
-              'Marker', 'o', 'markerSize', 3, ...
-              'MarkerFaceColor', 'k', 'Color', 'k')
-
-    xlabel('dV/dt (V/h)'); 
-    ylabel('$\Delta I$ (A)', 'Interpreter', 'Latex')
-    ylim([-0.25 0.25]); 
-    xlim([-1.5 1.5])
-
-end
-
-function plot_results_default(res)
-
-    %% Plot the results
-    fh = figure('Position', [500 100 650 900]);
-    th = tiledlayout(3, 1, 'Padding', 'none', 'TileSpacing', 'none'); 
-    
-    % SOC plot
-    ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]); %ylim([0.78 1.05])
-    ylabel('$z$', 'Interpreter', 'Latex')
-    
-    line(res.t./3600, res.za, 'Color', 'r', 'DisplayName', '$z_a$', 'LineWidth', 2)
-    line(res.t./3600, res.zb, 'Color', 'b', 'DisplayName', '$z_b$', 'LineWidth', 2)
-    if isfield(res, 'za_ohmic')
-        line(res.t./3600, res.za_ohmic, 'Color', 'r', 'DisplayName', '$z_{a,\mathrm{ohmic}}$', 'LineStyle', ':', 'LineWidth', 2)
-        line(res.t./3600, res.za_rebal, 'Color', 'r', 'DisplayName', '$z_{a,\mathrm{rebal}}$', 'LineStyle', '--', 'LineWidth', 2)
-        line(res.t./3600, res.zb_ohmic, 'Color', 'b', 'DisplayName', '$z_{b,\mathrm{ohmic}}$', 'LineStyle', ':')
-        line(res.t./3600, res.zb_rebal, 'Color', 'b', 'DisplayName', '$z_{b,\mathrm{rebal}}$', 'LineStyle', '--')
-    end
-
-    xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    ylim([-1.01 1.01])
-    legend show
-    
-    % Current plot
-    ax2 = nexttile(th, 2); box on; set(ax2, 'XTickLabel',[]); %ylim([-1.5 1.2])
-    xlabel(ax2, 'Time (hrs)', 'Interpreter', 'Latex')
-    ylabel(ax2, '$I$ (A)', 'Interpreter', 'Latex')
-    
-    line(res.t./3600, -res.Ia, 'Color', 'r', 'DisplayName', '$I_a$', 'LineWidth', 2)
-    line(res.t./3600, -res.Ib, 'Color', 'b', 'DisplayName', '$I_b$', 'LineWidth', 2)
-    if isfield(res, 'Ia_ohmic')
-        line(res.t./3600, -res.Ia_ohmic, 'Color', 'r', 'DisplayName', '$I_{a,\mathrm{ohmic}}$', 'LineStyle', ':', 'LineWidth', 2)
-        line(res.t./3600, -res.Ia_rebal, 'Color', 'r', 'DisplayName', '$I_{a,\mathrm{rebal}}$', 'LineStyle', '--', 'LineWidth', 2)
-        line(res.t./3600, -res.Ib_ohmic, 'Color', 'b', 'DisplayName', '$I_{b,\mathrm{ohmic}}$', 'LineStyle', ':')
-        line(res.t./3600, -res.Ib_rebal, 'Color', 'b', 'DisplayName', '$I_{b,\mathrm{rebal}}$', 'LineStyle', '--')
-    end
-
-    xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    lh = legend('show', 'Location', 'east');
-
-    % Voltage plot
-    ax3 = nexttile(th, 3); box on; %ylim([3.9, 4.25])
-    line(res.t./3600, res.Vt, 'Color', 'k', 'DisplayName', '')
-    xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax3)
-    xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax3)
-    xlabel('Time (hrs)')
-    ylabel('Voltage (V)')
-    legend(sprintf('$t_{cc}$ = %.2f hrs \n$t_{cv}$ = %.2f hrs', ...
-           res.t_chg_cc./3600, res.t_chg_cv./3600), ...
-        'Interpreter', 'latex')
-    ylim([2.5 4.25])
-
-    linkaxes([ax1, ax2, ax3], 'x')
-    %     xlim([0 2.5])
-
-end
-
-function plot_results_imbalance(res)
-    %% Make plots for the imbalance dynamics
-
-    %% Plot the results
-    fh = figure('Position', [500 100 650 900]);
-    th = tiledlayout(3, 1, 'Padding', 'none', 'TileSpacing', 'none'); 
-    
-    % SOC plot
     ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]);
-    ylabel('$\Delta z$', 'Interpreter', 'Latex')
+
+    tt = data.test_time_s;
+    i1 = sgolayfilt(-data.current_1, 3, 21);
+    i2 = sgolayfilt(-data.current_2, 3, 21);
+
+    line(tt./3600, i2, 'Color', 'b', 'Parent', ax1, ...
+        'LineWidth', 2, 'DisplayName', 'Experiment, Cell 1')    
+    line(tt./3600, i1, 'Color', 'r', 'Parent', ax1, ...
+        'LineWidth', 2, 'DisplayName', 'Experiment, Cell 2')
+    line(res_disc.t./3600, res_disc.Ib, 'Color', 'b', ...
+        'LineWidth', 2, 'LineStyle', '--', 'Parent', ax1, ...
+        'DisplayName', 'Model, Cell 1')
+    line(res_disc.t./3600, res_disc.Ia, 'Color', 'r', ...
+        'LineWidth', 2, 'LineStyle', '--', 'Parent', ax1, ...
+        'DisplayName', 'Model, Cell 2')
+
+    xlabel(ax1, '$t$ (hrs)', 'Interpreter', 'Latex')
+    ylabel(ax1, '$I$ (A)', 'Interpreter', 'Latex')
+    lh = legend(ax1, 'show'); set(lh, 'Location', 'northeast')
     
-    line(res.t./3600, res.za - res.zb, 'Color', 'k', 'DisplayName', '$\Delta z$')
-    if isfield(res, 'za_ohmic')
-        line(res.t./3600, res.za_ohmic - res.zb_ohmic, 'Color', 'r', 'DisplayName', '$\Delta z_{\mathrm{ohmic}}$')
-        line(res.t./3600, res.za_rebal - res.zb_rebal, 'Color', 'b', 'DisplayName', '$\Delta z_{\mathrm{rebal}}$')
+    % Voltage
+    ax2 = nexttile(th, 2); box on; 
+
+    line(data.test_time_s./3600, data.voltage_v, 'LineWidth', 2, ...
+        'Color', 'k', 'Parent', ax2, 'DisplayName', 'Experiment, $V_t$')
+    line(res_disc.t./3600, res_disc.Vt, 'LineWidth', 2, 'Color', 'k', ...
+        'LineStyle', '--', 'Parent', ax2, 'DisplayName', 'Model, $V_t$')
+    line(res_disc.t./3600, ocv_b(res_disc.zb), 'LineWidth', 2, ...
+        'Color', 'b', 'LineStyle', '--', 'Parent', ax2, 'DisplayName', 'Model, $U_1$')
+    line(res_disc.t./3600, ocv_a(res_disc.za), 'LineWidth', 2, ...
+        'Color', 'r', 'LineStyle', '--', 'Parent', ax2, 'DisplayName', 'Model, $U_2$')
+    ylim([3 4.25])
+
+
+    xlabel(ax2, '$t$ (hrs)', 'Interpreter', 'Latex')
+    ylabel(ax2, '$V$ (V)', 'Interpreter', 'Latex')
+    lh = legend(ax2, 'show'); set(lh, 'Location', 'northeast')
+
+    linkaxes([ax1, ax2], 'x')
+
+    if strcmpi(plottype, 'c10')
+        xlim(ax2, [0, 15.47])
+        line([0 15.47], [0 0], 'Color', [0.5, 0.5, 0.5], ...
+            'LineStyle', ':', 'HandleVisibility', 'off', 'Parent', ax1)
+
+    elseif strcmpi(plottype, 'c4')
+        xlim(ax2, [0, 7.39])
+        line([0 7.39], [0 0], 'Color', [0.5, 0.5, 0.5], ...
+            'LineStyle', ':', 'HandleVisibility', 'off', 'Parent', ax1)
     end
-
-    xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax1)
-    lh = legend('Show', 'Location', 'Best');
-    ylim([-0.03 0.03])
-
-    % Current plot
-    ax2 = nexttile(th, 2); box on; set(ax2, 'XTickLabel',[]); %ylim([-1.5 1.2])
-    xlabel(ax2, 'Time (hrs)', 'Interpreter', 'Latex')
-    ylabel(ax2, '$\Delta I$ (A)', 'Interpreter', 'Latex')
-    
-    line(res.t./3600, res.Ia - res.Ib, 'Color', 'k', 'DisplayName', '$\Delta I$')
-    if isfield(res, 'Ia_ohmic')
-        line(res.t./3600, -res.Ia_ohmic - res.Ib_ohmic, 'Color', 'r', 'DisplayName', '$\Delta I_{\mathrm{ohmic}}$')
-        line(res.t./3600, -res.Ia_rebal - res.Ib_rebal, 'Color', 'b', 'DisplayName', '$\Delta I_{\mathrm{rebal}}$')
-    end
-    
-    xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
-    lh = legend('show', 'Location', 'best');
-    ylim([-0.4 +0.4])
-    
-    % Voltage plot
-    ax3 = nexttile(th, 3); box on; %ylim([3.9, 4.25])
-    line(res.t./3600, res.Vt, 'Color', 'k', 'DisplayName', '')
-    xline(res.t_chg_cc./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax3)
-    xline(res.t_chg_cv./3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax3)
-    xlabel('Time (hrs)')
-    ylabel('Voltage (V)')
-    ylim([2.5 4.25])
-
-    linkaxes([ax1, ax2, ax3], 'x')
-%     xlim([0 2.5])
 
 end
