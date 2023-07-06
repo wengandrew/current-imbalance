@@ -14,6 +14,15 @@ function ocv = load_ocv_fn(type)
     switch type
         case 'lfp-affine'
             ocv = @(z) 0.6.*z + 3.0;
+
+            % A shallower slope OCV function which aligns more
+            % closely to the slope between 20% to 80% SOC
+            % but fails to capture Vmin and Vmax. Running existing
+            % code using this function requires treating Vmin and Vmax
+            % separately from ocv(0) and ocv(1) since otherwise the 
+            % cell resistance will cause the OCV-based voltage bounds
+            % to be quickly reached, and the cell won't cycle.
+            % ocv = @(z) 0.1.*z + 3.22;
             return
         case 'nmc-affine'
             ocv = @(z) 0.89.*z + 3.31;
@@ -39,6 +48,6 @@ function ocv = load_ocv_fn(type)
     data.soc = tbl.t ./ max(tbl.t);
     data.ocv = tbl.V;
 
-    ocv = griddedInterpolant(data.soc, data.ocv, 'linear', 'nearest');
+    ocv = griddedInterpolant(data.soc, data.ocv, 'linear', 'linear');
 
 end
