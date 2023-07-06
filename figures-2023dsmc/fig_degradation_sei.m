@@ -81,12 +81,29 @@ function fig_degradation_sei()
     set_default_plot_settings()
 
 
-    fh = figure('Position', [500 100 600 600]);
+    fh = figure('Position', [500 100 500 600]);
     th = tiledlayout(3, 1, 'Padding', 'none', 'TileSpacing', 'none');
 
+    % Rate constant
+    ax1 = nexttile(th, 1); set(ax1, 'XTickLabel', []); box on;
+    ylabel(ax1, '$r_{i,n}$', 'Interpreter', 'Latex')
+
+    line(cyc_num_vec, ka*ones(size(cyc_num_vec)), 'Color', 'r', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 1');
+    line(cyc_num_vec, kb*ones(size(cyc_num_vec)), 'Color', 'b', ...
+        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
+
+    line(cyc_num_vec, kc_vec, 'Color', 'k', ...
+        'LineStyle', '-', 'LineWidth', 3, ...
+        'DisplayName', 'Mixed');
+    lh = legend('show'); set(lh, 'Location', 'SouthWest')
+
+%     lh = legend('show', 'Interpreter', 'Latex');
+    ylim([min([ka, kb, kc])*0.9 max([ka, kb, kc])*1.1])
+    
     % Capacity loss
-    ax1 = nexttile(th, 1); box on; set(ax1,'XTickLabel',[]);
-    ylabel('$Q_i$ (Ah)', 'Interpreter', 'Latex')
+    ax2 = nexttile(th, 2); box on; set(ax2,'XTickLabel',[]);
+    ylabel('$Q_{i,n}$ (Ah)', 'Interpreter', 'Latex')
 
     line(cyc_num_vec, (p.Qa - dQa_vec)./3600, 'Color', 'k',  ...
         'LineStyle', '-', 'LineWidth', 3, 'DisplayName', 'Mixed');
@@ -95,11 +112,10 @@ function fig_degradation_sei()
     line(cyc_num_vec, (p.Qa - dQa2_vec)./3600, 'Color', 'b', ...
         'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
     ylim([0.8 3])
-    lh = legend('show'); set(lh, 'Location', 'SouthWest')
 
     % Resistance growth
-    ax2 = nexttile(th, 2); set(ax2, 'XTickLabel', []); box on;
-    ylabel(ax2, '$R_i$ (m$\Omega$)', 'Interpreter', 'Latex')
+    ax3 = nexttile(th, 3); box on;
+    ylabel(ax3, '$R_{i,n}$ (m$\Omega$)', 'Interpreter', 'Latex')
 
     line(cyc_num_vec, (p.Ra + dRa_vec).*1000, 'Color', 'k', ...
         'LineStyle', '-', 'LineWidth', 3, 'DisplayName', 'Mixed');
@@ -108,25 +124,10 @@ function fig_degradation_sei()
     line(cyc_num_vec, (p.Ra + dRa2_vec).*1000, 'Color', 'b', ...
         'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
 
-    xlabel('Cycle Number', 'Interpreter', 'Latex')
-%     lh = legend('show', 'Interpreter', 'Latex');
-
-    % Rate constant
-    ax3 = nexttile(th, 3); box on;
-    ylabel(ax3, '$r_i$', 'Interpreter', 'Latex')
-    xlabel(ax3, 'Cycle Number')
-
-    line(cyc_num_vec, kc_vec, 'Color', 'k', ...
-        'LineStyle', '-', 'LineWidth', 3, ...
-        'DisplayName', 'Mixed');
-    line(cyc_num_vec, ka*ones(size(cyc_num_vec)), 'Color', 'r', ...
-        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 1');
-    line(cyc_num_vec, kb*ones(size(cyc_num_vec)), 'Color', 'b', ...
-        'LineWidth', 2, 'LineStyle', '--', 'DisplayName', 'Rate 2');
-
     xlabel('$n$', 'Interpreter', 'Latex')
 %     lh = legend('show', 'Interpreter', 'Latex');
-    ylim([min([ka, kb, kc])*0.9 max([ka, kb, kc])*1.1])
+
+
 
 
 end

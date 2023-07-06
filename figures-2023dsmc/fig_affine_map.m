@@ -96,7 +96,7 @@ function plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
                            'LineWidth', 1.0, 'HandleVisibility', 'off')
 
     rectangle('Position', [0.5 1 0.5 0.5], 'EdgeColor',' r', ...
-              'LineWidth', 3, 'LineStyle', '-', 'FaceColor', [1 0 0 0.07])
+              'LineWidth', 3, 'LineStyle', '-', 'FaceColor', [1 0 0 0.02])
 
     line(rr, 1./rr, ...
         'LineWidth', 3, ...
@@ -107,16 +107,16 @@ function plot_dz_ss_sensitivity(Qa, Ra, current_target, alpha)
 
     text(1.25, 0.86, '$Q_2R_2 = Q_1R_1$', ...
                      'Interpreter', 'Latex', 'FontSize', 22', 'Rotation', -33)
-    text(0.60, 0.90, '$z_{2,ss} < z_{1,ss}$', ...
+    text(0.60, 0.90, '$\mathrm{min}(z_2) < \mathrm{min}(z_1)$', ...
                      'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c2)
-    text(1.10, 1.10, '$z_{2,ss} > z_{1,ss}$', ...
+    text(1.10, 1.10, '$\mathrm{min}(z_2) > \mathrm{min}(z_1)$', ...
                      'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c1)
 
-    q_vec = [0.7, 0.8, 1];
-    r_vec = [1.1, 1.25, 1.25];
+    q_vec = [0.7, 0.7, 1];
+    r_vec = [1.1, 1.43, 1.25];
     marker_vec = {'o', 's', '^'};
 
-    for i = 1
+    for i = 1:2
 
         q = q_vec(i);
         r = r_vec(i);
@@ -183,7 +183,7 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
     line([1 1], [0.5 1.5], 'Color', [0.3 0.3 0.3], 'LineStyle', ':', 'LineWidth', 1.0, 'HandleVisibility', 'off')
 
     rectangle('Position', [0.5 1 0.5 0.5], 'EdgeColor',' r', ...
-              'LineWidth', 3, 'LineStyle', '-', 'FaceColor', [1 0 0 0.07])
+              'LineWidth', 3, 'LineStyle', '-', 'FaceColor', [1 0 0 0.02])
 
 
     line(ones(size(qq)), qq, ...
@@ -193,14 +193,14 @@ function plot_di_ss_sensitivity(Qa, Ra, current_target)
     'Parent', gca, ...
     'DisplayName', '$q=1$'); hold all;
 
-    q_vec = [0.7, 0.8, 1];
-    r_vec = [1.1, 1.25, 1.25];
+    q_vec = [0.7, 0.7, 1];
+    r_vec = [1.1, 1.43, 1.25];
     marker_vec = {'o', 's', '^'};
 
     text(0.57, 0.90, '$|I_{2,ss}| < |I_{1,ss}|$', 'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c1)
     text(1.07, 1.10, '$|I_{2,ss}| > |I_{1,ss}|$', 'Interpreter', 'Latex', 'FontSize', 22, 'BackgroundColor', c2)
 
-    for i = 1
+    for i = 1:2
 
         q = q_vec(i);
         r = r_vec(i);
