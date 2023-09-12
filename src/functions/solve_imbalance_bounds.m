@@ -30,8 +30,8 @@ function [condition, zbound_l2, zbound_linf, ibound_l2, ibound_linf] = ...
 
     condition   = - A * k1 / B;    
     zbound_l2   = - B / (A * k1) * signorm_I + abs(dz0) * sqrt(-1/(2*A*k1));
-    zbound_linf = - B / (A * k1) * max(abs(I)) + abs(dz0);
-
+    zbound_linf = abs(dz0) * exp(k1*A*t) + abs(B/(A*k1))*max(abs(I)) * ( 1 - exp(k1*A*t) ) ;
+    
     ibound_l2   = abs( (2*k2*zbound_l2   + (Ra - Rb)*condition) / (Ra+Rb) );
     ibound_linf = abs( (2*k2*zbound_linf + (Ra - Rb)*condition) / (Ra+Rb) );
     
