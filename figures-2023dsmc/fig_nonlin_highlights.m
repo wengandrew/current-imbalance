@@ -70,7 +70,7 @@ function fig_nonlin_highlights(plot_type_int)
         I_cutoff, Ra, Rb, Qa, Qb, za0, zb0, ocv_lin, Vmin, Vmax);
 
     res_disc = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
-        I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, Vmin, Vmax);
+        I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, 3.0, Vmax);
 
     plot_results_default(res_lsim, res_disc, ocv_lin, ocv_nonlin, max_hours, p, za0-zb0, t, kappa, I_chg)
 %     plot_results_imbalance(res_lsim, res_disc, max_hours)
@@ -125,14 +125,16 @@ function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours, p, dz0
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.za(idxb) - resb.zb(idxb), 'Color', 'k', 'LineWidth', 2, 'HandleVisibility', 'off')
 
     yline(kappa*I(1), 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2, 'DisplayName', 'Bound (affine, $\kappa$I)')
-    yline(zbound_linf, 'Color', 'r', 'LineWidth', 2, 'DisplayName', 'Bound (nonlinear)')
+    line(t./3600,zbound_linf, 'Color', 'r', 'LineWidth', 2, 'DisplayName', 'Bound (nonlinear)')
     yline(-kappa*I(1), 'Color', 'r', 'LineStyle', '--', 'LineWidth', 2, 'HandleVisibility', 'off')
-    yline(-zbound_linf, 'Color', 'r', 'LineWidth', 2, 'HandleVisibility', 'off')
+    line(t./3600,-zbound_linf, 'Color', 'r', 'LineWidth', 2, 'HandleVisibility', 'off')
 
     xline(resa.t_chg_cc./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     xline(resa.t_chg_cv./3600 - (t0-t3)/3600, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     yline(0, 'LineStyle', ':', 'Color', 'k', 'LineWidth', 1, 'HandleVisibility', 'off', 'Parent', ax2)
     lh = legend('Show', 'Location', 'Best');
+
+    ylim([-0.5 0.5])
 %     ylabel('$z$', 'Interpreter', 'Latex')
 % 
 %     line(resa.t./3600 - (t0-t3)/3600, resa.zb, 'Color', 'b', 'LineStyle', '--', 'DisplayName', '$z_1$ (affine)', 'LineWidth', 2)
