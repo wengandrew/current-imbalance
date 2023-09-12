@@ -94,11 +94,11 @@ function aw20221221_imbalance_bound_simulations(analysis_type, q, r, current_tar
     z_tilde = out.zb - out.za;
     signorm_z_tilde = sqrt(trapz(out.t, z_tilde.^2));
 
-    fprintf('L2   Condition:  %.3f <= %.3f ? \t%g \n', abs(current_target), condition, abs(current_target) < condition);
-    fprintf('L2   Bound:      %.3f <= %.3f ? \t%g \n', signorm_z_tilde, zbound_l2, signorm_z_tilde < zbound_l2)
+%     fprintf('L2   Condition:  %.3f <= %.3f ? \t%g \n', abs(current_target), condition, abs(current_target) < condition);
+%     fprintf('L2   Bound:      %.3f <= %.3f ? \t%g \n', signorm_z_tilde, zbound_l2, signorm_z_tilde < zbound_l2)
     
-    fprintf('Linf Condition:  %.3f <= %.3f ? \t%g \n', max(abs(I)), condition, max(abs(I)) < condition);
-    fprintf('Linf Bound:      %.3f <= %.3f ? \t%g \n', max(dz0), zbound_linf, max(dz0) < zbound_linf);
+%     fprintf('Linf Condition:  %.3f <= %.3f ? \t%g \n', max(abs(I)), condition, max(abs(I)) < condition);
+%     fprintf('Linf Bound:      %.3f <= %.3f ? \t%g \n', max(dz0), zbound_linf, max(dz0) < zbound_linf);
 
     % See the results
 
@@ -114,11 +114,12 @@ function aw20221221_imbalance_bound_simulations(analysis_type, q, r, current_tar
         ylabel('$z$', 'Interpreter', 'Latex')
         legend showline
 
+
         ax4 = subplot(512);
         line(tfinal./3600, abs(za - zb), 'Color', 'r', 'DisplayName', 'Analytic')
         yline(abs(kappa * current_target), 'DisplayName', 'Bound ($\kappa I$)', 'LineStyle', '--', 'Color', 'r')
         line(out.t./3600, abs(out.za - out.zb), 'Color', 'b', 'DisplayName', 'Simulated')
-        yline(zbound_linf, 'DisplayName', 'Bound ($-\frac{B}{Ak_1}\max(|I|) + |\tilde{z}_0|$)', 'LineStyle', '--', 'Color', 'b')
+        line(out.t./3600, zbound_linf, 'DisplayName', 'Bound ($-\frac{B}{Ak_1}\max(|I|) + |\tilde{z}_0|$)', 'LineStyle', '--', 'Color', 'b')
         ylabel('$|\Delta z|$', 'Interpreter', 'Latex')
         legend show
     
