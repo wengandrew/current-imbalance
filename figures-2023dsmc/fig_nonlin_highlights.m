@@ -1,14 +1,13 @@
-function fig_nonlin_highlights(plot_type_int)
+function fig_nonlin_highlights(chemistry, plot_type_int)
     % Run a full charge CCCV and discharge CC simulation
     %
     % Parameters
     % ----------
+    % chemistry: 'lfp', 'nmc'
     % plot_type_int: (1) or (2)
 
     set_default_plot_settings();
 
-    CHEMISTRY = 'nmc';
-    
     % Initialize model parameters
     Ra  = 0.15; % ohms
     Qa  = 3.00 * 3600; % As
@@ -23,21 +22,24 @@ function fig_nonlin_highlights(plot_type_int)
             r = 1/q; % QR matching condition
     end
 
-    switch CHEMISTRY
+    switch chemistry
         case 'lfp'
             Vmax = 3.6;
             U0 = 3.0;
             Vmin = 3.0;
+            label = '(LFP/Gr)';
             affine_name = 'lfp-affine';
         case 'nmc'
             Vmax = 4.2;
             Vmin = 3.31;
             U0 = 3.31;
+            label = '(NMC/Gr)';
             affine_name = 'nmc-affine';
         case 'nmc-umbl2022feb'
             Vmax = 4.2;
             Vmin = 3.0;
             U0 = 3.0;
+            label = '(NMC/Gr)';
             affine_name = 'nmc-affine';
     end
 
@@ -56,7 +58,7 @@ function fig_nonlin_highlights(plot_type_int)
 
     %% Test the analytic solution
     ocv_lin = load_ocv_fn(affine_name);
-    ocv_nonlin = load_ocv_fn(CHEMISTRY);
+    ocv_nonlin = load_ocv_fn(chemistry);
     max_hours = 15;
 
     % Initialize simulation parameters
@@ -72,12 +74,12 @@ function fig_nonlin_highlights(plot_type_int)
     res_disc = run_discrete_time_simulation_multicycle(I_chg, I_dch, ...
         I_cutoff, Qa, Qb, Ra, Rb, za0, zb0, ocv_nonlin, 3.0, Vmax);
 
-    plot_results_default(res_lsim, res_disc, ocv_lin, ocv_nonlin, max_hours, p, za0-zb0, t, kappa, I_chg)
+    plot_results_default(res_lsim, res_disc, ocv_lin, ocv_nonlin, max_hours, p, za0-zb0, t, kappa, I_chg, label)
 %     plot_results_imbalance(res_lsim, res_disc, max_hours)
 
 end
 
-function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours, p, dz0, t, kappa, I)
+function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours, p, dz0, t, kappa, I, label)
 
     % Define time offsets so that the affine and the non-linear simulations
     % will share common points at the start and end of the CV hold phase.
@@ -100,8 +102,8 @@ function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours, p, dz0
     line(resa.t./3600 - (t0-t3)/3600, resa.Ib, 'Color', 'b', 'LineStyle', '--', 'DisplayName', '$I_1$ (affine)', 'LineWidth', 2)
     line(resa.t./3600 - (t0-t3)/3600, resa.Ia, 'Color', 'r', 'LineStyle', '--', 'DisplayName', '$I_2$ (affine)', 'LineWidth', 2)
 
-    line(resb.t(idxa)./3600, resb.Ib(idxa), 'Color', 'b', 'DisplayName', '$I_1$ (NMC/Gr)', 'LineWidth', 2)
-    line(resb.t(idxa)./3600, resb.Ia(idxa), 'Color', 'r', 'DisplayName', '$I_2$ (NMC/Gr)', 'LineWidth', 2)
+    line(resb.t(idxa)./3600, resb.Ib(idxa), 'Color', 'b', 'DisplayName', ['$I_1$ ' label], 'LineWidth', 2)
+    line(resb.t(idxa)./3600, resb.Ia(idxa), 'Color', 'r', 'DisplayName', ['$I_2$ ' label]', 'LineWidth', 2)
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Ib(idxb), 'Color', 'b', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Ia(idxb), 'Color', 'r', 'DisplayName', '', 'LineWidth', 2, 'HandleVisibility', 'off')
 
@@ -160,9 +162,9 @@ function plot_results_default(resa, resb, ocv_lin, ocv_nonlin, max_hours, p, dz0
     line(resa.t./3600 - (t0-t3)/3600, resa.Vt, 'LineStyle', '--', 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$V_t$ (affine)')
     line(resa.t./3600 - (t0-t3)/3600, ocv_lin(resa.zb), 'LineStyle', '--', 'LineWidth', 2, 'Color', 'b', 'DisplayName', '$U_1$ (affine)')
     line(resa.t./3600 - (t0-t3)/3600, ocv_lin(resa.za), 'LineStyle', '--', 'LineWidth', 2, 'Color', 'r', 'DisplayName', '$U_2$ (affine)')
-    line(resb.t(idxa)./3600, resb.Vt(idxa), 'Color', 'k', 'LineWidth', 2, 'DisplayName', '$V_t$ (NMC/Gr)')
-    line(resb.t(idxa)./3600, ocv_nonlin(resb.zb(idxa)), 'LineWidth', 2, 'Color', 'b', 'DisplayName', '$U_1$ (NMC/Gr)')
-    line(resb.t(idxa)./3600, ocv_nonlin(resb.za(idxa)), 'LineWidth', 2, 'Color', 'r', 'DisplayName', '$U_2$ (NMC/Gr)')
+    line(resb.t(idxa)./3600, resb.Vt(idxa), 'Color', 'k', 'LineWidth', 2, 'DisplayName', ['$V_t$ ' label])
+    line(resb.t(idxa)./3600, ocv_nonlin(resb.zb(idxa)), 'LineWidth', 2, 'Color', 'b', 'DisplayName', ['$U_1$ ' label])
+    line(resb.t(idxa)./3600, ocv_nonlin(resb.za(idxa)), 'LineWidth', 2, 'Color', 'r', 'DisplayName', ['$U_2$ ' label])
 
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, resb.Vt(idxb), 'Color', 'k', 'LineWidth', 2, 'HandleVisibility', 'off')
     line(resb.t(idxb)./3600 + (t1-t2)/3600 - (t0-t3)/3600, ocv_nonlin(resb.za(idxb)), 'LineWidth', 2, 'Color', 'r', 'HandleVisibility', 'off')
